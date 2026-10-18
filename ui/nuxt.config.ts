@@ -9,7 +9,7 @@ export default defineNuxtConfig({
   css: [css],
   devtools: { enabled: false },
   telemetry: false,
-  // The CSP allows no third-party requests: no Google Fonts, no icon API, no color-mode inline script.
+  // The CSP allows no third-party requests except Cloudflare Web Analytics: no Google Fonts, no icon API, no color-mode inline script.
   ui: { fonts: false, colorMode: false, experimental: { componentDetection: true }, theme: { colors: ['primary', 'secondary', 'success', 'info', 'warning', 'error'] } },
   icon: { mode: 'svg', provider: 'none', serverBundle: false, clientBundle: { scan: true, sizeLimitKb: 0 }, fallbackToApi: false },
   app: {

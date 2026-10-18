@@ -14,7 +14,7 @@ Cloudflare Workers Builds deploys every push to `main` (build `pnpm run build`, 
 
 ## How it fits together
 
-- `ui/` is the shared theme layer (Junk Desk design system: Nuxt UI, Plus Jakarta Sans and DM Serif Display, ink neutrals, navy/lime). Colors live in CSS so the strict CSP in `public/_headers` holds.
+- `ui/` is the shared theme layer (Junk Desk design system: Nuxt UI, Plus Jakarta Sans and DM Serif Display, ink neutrals, navy/lime). Colors live in CSS so the strict CSP in `public/_headers` holds; its only outside source is Cloudflare Web Analytics, which the zone injects.
 - `app/radio/sim.ts` models the IC-R5's behaviour from the instruction manual: VFO and memory modes, bands and tuning steps, squelch and monitor, receive modes, memory write and skip, band/full/memory scans with pause and resume timers, set mode, key lock, the [DIAL]/volume swap and both resets. It knows nothing about Vue or three.js.
 - `app/radio/bands.ts` holds the bands, tuning steps and the signals the simulator can receive: VRT's FM frequencies for Vlaams-Brabant and Brussels, plus invented practice signals (CB 19, PMR446 channel 3, a 2 m repeater, the ISS downlink, a shortwave and a medium-wave station, a DAB+ block).
 - `app/radio/model.ts` builds the radio procedurally in millimetres (58 × 86 × 27 mm body), with canvas textures for the printing, the key labels and the display. `app/radio/lcd.ts` draws the display with the DSEG segment fonts.
