@@ -3,10 +3,17 @@ import type { Ref } from 'vue';
 import type { View } from '~/radio/controls';
 import type { Control } from '~/radio/controls';
 import type { Session } from '~/radio/session';
+import type { State } from '~/radio/sim';
 import { runDemo, type DemoRun } from '~/lessons/demo';
 import type { Lesson } from '~/lessons/types';
 
-export function useLessonRun(lesson: Ref<Lesson>, session: Session) {
+export interface LessonRunHooks {
+  /** A step began (also when going back to one); `radio` is the radio's state at that moment. */
+  onStep?: (index: number, radio: State) => void;
+  onFinish?: () => void;
+}
+
+export function useLessonRun(lesson: Ref<Lesson>, session: Session, hooks: LessonRunHooks = {}) {
   const { markDone } = useProgress();
   const index = ref(0);
   const completed = ref<boolean[]>([]);
@@ -16,6 +23,8 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session) {
   let memo: Record<string, number> = {};
   let demo: DemoRun | null = null;
   let advanceTimer: ReturnType<typeof setTimeout> | null = null;
+  /** True between completing a step and moving on; the glow is hidden only then, not on revisits. */
+  const advancing = ref(false);
   /** The radio as it was when the current step began, for redoing the step. */
   let snapshot: ReturnType<typeof structuredClone<Session['radio']['state']>> | null = null;
 
@@ -27,11 +36,11 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session) {
     for (let i = index.value; i >= 0; i--) { const v = lesson.value.steps[i]?.view; if (v) return v; }
     return 'front';
   });
-  const highlight = computed<Control[]>(() => (finished.value || isComplete.value ? [] : step.value.target ?? []));
-  const gesture = computed(() => (finished.value || isComplete.value ? null : step.value.gesture ?? null));
+  const highlight = computed<Control[]>(() => (finished.value || advancing.value ? [] : step.value.target ?? []));
+  const gesture = computed(() => (finished.value || advancing.value ? null : step.value.gesture ?? null));
 
   function cancelDemo() { if (demo) demo.cancelled = true; demo = null; demoing.value = false; }
-  function clearTimer() { if (advanceTimer) clearTimeout(advanceTimer); advanceTimer = null; }
+  function clearTimer() { if (advanceTimer) clearTimeout(advanceTimer); advanceTimer = null; advancing.value = false; }
 
   function enterStep(i: number) {
     clearTimer();
@@ -40,6 +49,7 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session) {
     memo = {};
     quizPick.value = null;
     snapshot = structuredClone(toRaw(session.radio.state));
+    hooks.onStep?.(i, snapshot);
   }
 
   /** Un-marks the current step and puts the radio back as it was when the step began. */
@@ -53,27 +63,33 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session) {
     quizPick.value = null;
   }
 
-  function start() {
+  /**
+   * Starts the lesson, or picks it up at `step` with the radio as saved for that step.
+   * Steps before `step` count as done; `finished` opens the end of the lesson.
+   */
+  function start(opts: { step?: number; radio?: Partial<State> | null; finished?: boolean } = {}) {
     clearTimer();
     cancelDemo();
     session.input.releaseAll();
-    session.radio.load(lesson.value.setup());
-    completed.value = lesson.value.steps.map(() => false);
-    finished.value = false;
-    enterStep(0);
+    session.radio.load(opts.radio ?? lesson.value.setup());
+    const count = lesson.value.steps.length;
+    const step = Math.max(0, Math.min(count - 1, opts.step ?? 0));
+    completed.value = lesson.value.steps.map((_, i) => !!opts.finished || i < step);
+    finished.value = !!opts.finished;
+    enterStep(opts.finished ? count - 1 : step);
   }
 
   function complete(auto: boolean) {
     if (completed.value[index.value]) return;
     completed.value = completed.value.map((c, i) => (i === index.value ? true : c));
-    if (auto) advanceTimer = setTimeout(next, 1200);
+    if (auto) { advancing.value = true; advanceTimer = setTimeout(next, 1200); }
   }
 
   function next() {
     clearTimer();
     if (kind.value === 'info' || kind.value === 'action' || kind.value === 'explore') completed.value = completed.value.map((c, i) => (i === index.value ? true : c));
     if (index.value < lesson.value.steps.length - 1) enterStep(index.value + 1);
-    else { finished.value = true; cancelDemo(); markDone(lesson.value.slug); }
+    else { finished.value = true; cancelDemo(); markDone(lesson.value.slug); hooks.onFinish?.(); }
   }
 
   function prev() {
@@ -85,7 +101,7 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session) {
 
   function pick(control: Control) {
     // Clicking the right part moves straight on; there is nothing to watch happen on the radio.
-    if (kind.value === 'explore' && control === step.value.explore && !completed.value[index.value]) next();
+    if (kind.value === 'explore' && control === step.value.explore) next();
   }
 
   function answer(i: number) {
@@ -114,7 +130,7 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session) {
   const poll = import.meta.client ? setInterval(() => evaluate(null), 400) : null;
   onScopeDispose(() => { off(); clearTimer(); cancelDemo(); if (poll) clearInterval(poll); });
 
-  watch(lesson, start);
+  watch(lesson, () => start());
 
   return { index, step, kind, completed, isComplete, finished, quizPick, demoing, view, highlight, gesture, start, next, prev, goTo, pick, answer, showMe, resetStep };
 }

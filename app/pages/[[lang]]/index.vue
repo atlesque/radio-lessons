@@ -2,11 +2,11 @@
 import { MHz } from '~/radio/bands';
 import { createSession } from '~/radio/session';
 import { tuned } from '~/lessons/helpers';
-import { LESSONS } from '~/lessons/lessons';
+import { LESSONS, lessonBySlug } from '~/lessons/lessons';
 
 definePageMeta({ validate: (route) => !route.params.lang || route.params.lang === 'nl' });
 const { t, to } = useLang();
-const { isDone } = useProgress();
+const { data, isDone, resumeOf } = useProgress();
 usePageSeo({
   path: '/',
   title: () => t({ en: 'Radio lessons: get started with the Icom IC-R5', nl: 'Radiolessen: aan de slag met de Icom IC-R5' }),
@@ -23,6 +23,17 @@ onMounted(() => session.radio.load(tuned(MHz(100.6), 'WFM', { vol: 8 })));
 const totalMinutes = LESSONS.reduce((a, l) => a + l.minutes, 0);
 const nextLesson = computed(() => LESSONS.find((l) => !isDone(l.slug)) ?? LESSONS[0]!);
 const anyDone = computed(() => LESSONS.some((l) => isDone(l.slug)));
+/** The lesson and step last worked on, if it wasn't finished. */
+const resume = computed(() => {
+  const last = data.value.last;
+  const lesson = last && last.step >= 0 ? lessonBySlug(last.slug) : null;
+  if (!lesson || !last) return null;
+  return { lesson, n: LESSONS.indexOf(lesson) + 1, step: last.step, to: to(`/lessons/${lesson.slug}?step=${last.step + 1}`) };
+});
+const inProgress = (slug: string) => {
+  const r = resumeOf(slug);
+  return r && r.step > 0 && !isDone(slug) ? r.step + 1 : null;
+};
 </script>
 
 <template>
@@ -43,13 +54,24 @@ const anyDone = computed(() => LESSONS.some((l) => isDone(l.slug)));
         </p>
         <div class="mt-6 flex flex-wrap gap-2">
           <UButton
+            v-if="resume"
+            :to="resume.to"
+            size="lg"
+            trailing-icon="i-lucide-arrow-right"
+            :label="`${t({ en: 'Continue lesson', nl: 'Verder met les' })} ${resume.n} · ${t({ en: 'step', nl: 'stap' })} ${resume.step + 1}`"
+          />
+          <UButton
+            v-else
             :to="to(`/lessons/${nextLesson.slug}`)"
             size="lg"
             trailing-icon="i-lucide-arrow-right"
-            :label="anyDone ? t({ en: 'Continue', nl: 'Verder gaan' }) : t({ en: 'Start lesson 1', nl: 'Start les 1' })"
+            :label="anyDone ? `${t({ en: 'Next: lesson', nl: 'Volgende: les' })} ${LESSONS.indexOf(nextLesson) + 1}` : t({ en: 'Start lesson 1', nl: 'Start les 1' })"
           />
           <UButton :to="to('/play')" size="lg" color="neutral" variant="outline" icon="i-lucide-gamepad-2" :label="t({ en: 'Free play', nl: 'Vrij spelen' })" />
         </div>
+        <p v-if="resume" class="mt-3 text-sm text-toned">
+          {{ t({ en: 'Last time:', nl: 'Vorige keer:' }) }} <span class="font-medium text-highlighted">{{ t(resume.lesson.title) }}</span>
+        </p>
         <p class="mt-4 text-sm text-muted">
           {{ LESSONS.length }} {{ t({ en: 'lessons', nl: 'lessen' }) }} · {{ t({ en: 'about', nl: 'ongeveer' }) }} {{ totalMinutes }} {{ t({ en: 'minutes', nl: 'minuten' }) }} · English &amp; Nederlands
         </p>
@@ -69,7 +91,7 @@ const anyDone = computed(() => LESSONS.some((l) => isDone(l.slug)));
       <ol class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <li v-for="(l, i) in LESSONS" :key="l.slug">
           <NuxtLink
-            :to="to(`/lessons/${l.slug}`)"
+            :to="to(`/lessons/${l.slug}`) + (inProgress(l.slug) ? `?step=${inProgress(l.slug)}` : '')"
             class="group flex h-full gap-3 rounded-lg border border-default bg-default p-4 transition hover:border-accented hover:bg-elevated/60 focus-visible:outline-2 focus-visible:outline-primary"
           >
             <span class="grid size-10 shrink-0 place-items-center rounded-md bg-elevated text-primary">
@@ -79,6 +101,7 @@ const anyDone = computed(() => LESSONS.some((l) => isDone(l.slug)));
               <span class="flex items-center gap-2 text-xs font-semibold text-muted">
                 {{ t({ en: 'Lesson', nl: 'Les' }) }} {{ i + 1 }} · {{ l.minutes }} min
                 <UBadge v-if="isDone(l.slug)" color="success" variant="subtle" size="sm" icon="i-lucide-check" :label="t({ en: 'Done', nl: 'Klaar' })" />
+                <UBadge v-else-if="inProgress(l.slug)" color="secondary" variant="subtle" size="sm" icon="i-lucide-circle-play" :label="`${t({ en: 'Step', nl: 'Stap' })} ${inProgress(l.slug)}/${l.steps.length}`" />
               </span>
               <span class="mt-0.5 block font-semibold text-highlighted group-hover:underline">{{ t(l.title) }}</span>
               <span class="mt-1 block text-sm leading-snug text-muted">{{ t(l.summary) }}</span>

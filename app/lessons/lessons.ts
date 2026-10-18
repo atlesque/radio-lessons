@@ -69,8 +69,8 @@ export const LESSONS: Lesson[] = [
       {
         title: L('Keys with two or three jobs', 'Toetsen met twee of drie functies'), explore: 'BAND', target: ['BAND'], gesture: 'click', view: 'front',
         body: L(
-          'The four keys under the display each have more than one job:\n\n- the **white** label is a short press\n- the **orange** label is a press-and-hold for 1 second\n- a **boxed** label works together with {FUNC}\n\nClick {BAND}.',
-          'De vier toetsen onder het display hebben elk meer dan één functie:\n\n- het **witte** label is een korte druk\n- het **oranje** label is 1 seconde ingedrukt houden\n- een label **in een kader** werkt samen met {FUNC}\n\nKlik op {BAND}.',
+          'The four keys under the display each have more than one job:\n\n- the **white** label is a short press\n- the **orange** label (S.MW, SCAN, SET) is a press-and-hold for 1 second\n- a **boxed** label (SKIP, LOCK) works while you hold {FUNC}: SKIP with a short press of {VM}, LOCK by holding {BAND} for 1 second\n\nClick {BAND}.',
+          'De vier toetsen onder het display hebben elk meer dan één functie:\n\n- het **witte** label is een korte druk\n- het **oranje** label (S.MW, SCAN, SET) is 1 seconde ingedrukt houden\n- een label **in een kader** (SKIP, LOCK) werkt terwijl je {FUNC} inhoudt: SKIP met een korte druk op {VM}, LOCK door {BAND} 1 seconde in te houden\n\nKlik op {BAND}.',
         ),
       },
       {

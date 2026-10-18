@@ -4,7 +4,12 @@ import type { View } from '~/radio/controls';
 import { createSession } from '~/radio/session';
 import { tuned } from '~/lessons/helpers';
 
-definePageMeta({ validate: (route) => !route.params.lang || route.params.lang === 'nl' });
+definePageMeta({
+  validate: (route) => !route.params.lang || route.params.lang === 'nl',
+  // The same radio in both languages: switching language doesn't reset it.
+  key: 'play',
+  scrollToTop: false,
+});
 const { t } = useLang();
 const route = useRoute();
 usePageSeo({

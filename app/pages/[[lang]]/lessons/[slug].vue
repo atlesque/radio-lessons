@@ -2,12 +2,18 @@
 import type { View } from '~/radio/controls';
 import { createSession } from '~/radio/session';
 import { LESSONS, lessonBySlug } from '~/lessons/lessons';
+import { packRadio, unpackRadio } from '~/progress/snapshot';
 
 definePageMeta({
   validate: (route) => (!route.params.lang || route.params.lang === 'nl') && !!LESSONS.find((l) => l.slug === route.params.slug),
+  // One page per lesson whatever the language, so switching language keeps the lesson where it is.
+  key: (route) => `lesson:${route.params.slug}`,
+  scrollToTop: false,
 });
 const route = useRoute();
+const router = useRouter();
 const { t } = useLang();
+const progress = useProgress();
 const lesson = computed(() => lessonBySlug(String(route.params.slug))!);
 const number = computed(() => LESSONS.indexOf(lesson.value) + 1);
 const next = computed(() => LESSONS[number.value] ?? null);
@@ -20,10 +26,35 @@ usePageSeo({
 
 const session = createSession();
 onBeforeUnmount(() => session.dispose());
-const run = useLessonRun(lesson, session);
+
+/** Keeps ?step= in the URL in step with the lesson (1-based, or "done"). */
+function syncUrl(step: number | 'done') {
+  if (route.query.step === String(step)) return;
+  void router.replace({ query: { ...route.query, step: String(step) }, hash: route.hash });
+}
+
+const run = useLessonRun(lesson, session, {
+  onStep: (i, radio) => {
+    syncUrl(i + 1);
+    progress.setPosition(lesson.value.slug, i, packRadio(radio));
+  },
+  onFinish: () => syncUrl('done'),
+});
 const view = ref<View>('front');
 watch(() => run.view.value, (v) => { view.value = v; }, { immediate: true });
-onMounted(() => run.start());
+
+onMounted(() => {
+  // Wait for useProgress to read localStorage (its own onMounted ran first, in setup order).
+  const slug = lesson.value.slug;
+  const q = route.query.step;
+  if (q === 'done') { run.start({ finished: true }); return; }
+  const saved = progress.resumeOf(slug);
+  const asked = Number(q);
+  const step = Number.isInteger(asked) && asked >= 1 ? asked - 1 : saved?.step ?? 0;
+  // The saved radio belongs to the saved step; for any other step, start from the lesson's setup.
+  const radio = saved && saved.step === step && saved.radio ? unpackRadio(saved.radio) : null;
+  run.start({ step, radio });
+});
 </script>
 
 <template>
