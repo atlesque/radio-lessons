@@ -33,8 +33,8 @@ export const LESSONS: Lesson[] = [
     title: L('Meet your IC-R5', 'Maak kennis met je IC-R5'),
     summary: L('A tour of every key, the dial, the display and the connectors.', 'Een rondleiding langs elke toets, de knop, het display en de aansluitingen.'),
     intro: L(
-      'The Icom IC-R5 is a pocket communications receiver, often called a scanner. It covers 0.150 to 1309.995 MHz and only receives: it cannot transmit, so you can never disturb anyone with it.\n\nDrag to turn the radio, scroll or pinch to zoom. Click each highlighted part to continue.',
-      'De Icom IC-R5 is een zakformaat communicatieontvanger, vaak scanner genoemd. Hij ontvangt van 0,150 tot 1309,995 MHz en kan alleen ontvangen: zenden kan niet, dus je stoort er nooit iemand mee.\n\nSleep om de radio te draaien, scrol of knijp om te zoomen. Klik op elk oplichtend onderdeel om verder te gaan.',
+      'The Icom IC-R5 is a pocket communications receiver, often called a scanner. It covers 0.150 to 1309.995 MHz and only receives: it cannot transmit, so you can never disturb anyone with it.\n\nDrag to turn the radio; it zooms by itself to stay in view. Click each highlighted part to continue.',
+      'De Icom IC-R5 is een zakformaat communicatieontvanger, vaak scanner genoemd. Hij ontvangt van 0,150 tot 1309,995 MHz en kan alleen ontvangen: zenden kan niet, dus je stoort er nooit iemand mee.\n\nSleep om de radio te draaien; hij zoomt zelf zodat hij in beeld blijft. Klik op elk oplichtend onderdeel om verder te gaan.',
     ),
     setup: () => ({ power: false }),
     steps: [

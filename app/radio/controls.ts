@@ -24,17 +24,17 @@ export const CONTROL_INFO: Record<Control, { name: L; short: L }> = {
   SPEAKER: { name: { en: 'Speaker', nl: 'Luidspreker' }, short: { en: 'The built-in speaker.', nl: 'De ingebouwde luidspreker.' } },
 };
 
-/** Camera presets: a direction from the target and a distance, in millimetres. */
+/** Camera presets: the direction the radio is seen from. The distance is always computed so the whole radio fits. */
 export type View = 'front' | 'overview' | 'left' | 'right' | 'top' | 'back' | 'angle' | 'leftTop';
-export const VIEWS: Record<View, { dir: [number, number, number]; target: [number, number, number]; dist: number }> = {
-  overview: { dir: [0.35, 0.16, 1], target: [0, 62, 0], dist: 450 },
-  front: { dir: [0, 0.05, 1], target: [0, 4, 0], dist: 250 },
-  angle: { dir: [0.55, 0.3, 1], target: [0, 8, 0], dist: 270 },
-  left: { dir: [-1, 0.12, 0.35], target: [0, 18, 0], dist: 210 },
-  leftTop: { dir: [-0.85, 0.6, 0.75], target: [0, 26, 0], dist: 270 },
-  right: { dir: [1, 0.12, 0.35], target: [0, 8, 0], dist: 210 },
-  top: { dir: [0.15, 1, 0.75], target: [0, 40, 0], dist: 230 },
-  back: { dir: [-0.15, 0.1, -1], target: [0, 0, 0], dist: 250 },
+export const VIEWS: Record<View, { dir: [number, number, number] }> = {
+  overview: { dir: [0.35, 0.22, 1] },
+  front: { dir: [0, 0.22, 1] },
+  angle: { dir: [0.55, 0.3, 1] },
+  left: { dir: [-1, 0.12, 0.35] },
+  leftTop: { dir: [-0.85, 0.6, 0.75] },
+  right: { dir: [1, 0.12, 0.35] },
+  top: { dir: [0.15, 1, 0.75] },
+  back: { dir: [-0.15, 0.1, -1] },
 };
 
 /** Which view shows a control best. */

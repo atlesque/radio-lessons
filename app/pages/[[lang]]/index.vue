@@ -56,7 +56,7 @@ const anyDone = computed(() => LESSONS.some((l) => isDone(l.slug)));
       </div>
       <div class="stage relative h-[380px] overflow-hidden rounded-xl border border-default sm:h-[480px]">
         <ClientOnly>
-          <RadioViewer :session="session" view="overview" idle-spin :keyboard="false" />
+          <RadioViewer :session="session" view="overview" idle-spin :keyboard="false" :wheel-zoom="false" />
         </ClientOnly>
         <p class="pointer-events-none absolute bottom-2 left-3 text-[0.7rem] text-dimmed">
           {{ t({ en: 'Drag to turn · scroll over the knob to tune', nl: 'Sleep om te draaien · scrol boven de knop om af te stemmen' }) }}

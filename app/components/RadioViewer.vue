@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { CONTROL_INFO, VIEWS, type Control, type View } from '~/radio/controls';
+import { fitDistance, frameRadio } from '~/radio/framing';
 import { loadLcdFonts } from '~/radio/lcd';
 import { buildRadio, type RadioModel } from '~/radio/model';
 import type { Session } from '~/radio/session';
@@ -18,7 +19,9 @@ const props = withDefaults(defineProps<{
   /** Slowly turn the radio while nobody touches it (home page). */
   idleSpin?: boolean;
   keyboard?: boolean;
-}>(), { highlight: () => [], gesture: null, view: 'front', idleSpin: false, keyboard: true });
+  /** Scroll over the radio to zoom out. Off where the page itself should scroll (home page). */
+  wheelZoom?: boolean;
+}>(), { highlight: () => [], gesture: null, view: 'front', idleSpin: false, keyboard: true, wheelZoom: true });
 const emit = defineEmits<{ pick: [control: Control] }>();
 const { t, lang } = useLang();
 
@@ -38,7 +41,12 @@ let frame = 0;
 let last = performance.now();
 let hovered: Control | null = null;
 let idleSince = performance.now();
-let tween: { from: THREE.Vector3; to: THREE.Vector3; tFrom: THREE.Vector3; tTo: THREE.Vector3; start: number; ms: number } | null = null;
+// Camera moves interpolate direction (on the sphere), target and zoom, and are fitted on every frame.
+let tween: { from: THREE.Spherical; to: THREE.Spherical; tFrom: THREE.Vector3; tTo: THREE.Vector3; zFrom: number; start: number; ms: number } | null = null;
+/** How far out from the fitted distance the user zoomed (1 = fitted; never closer, so nothing is cropped). */
+let zoomOut = 1;
+const MAX_ZOOM_OUT = 2.4;
+const FOV = 30;
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 let dialDrag: { id: number; x: number; y: number; acc: number } | null = null;
@@ -99,10 +107,16 @@ function onPointerUp(e: PointerEvent) {
 
 function onWheel(e: WheelEvent) {
   const c = pick(e);
-  if (c !== 'DIAL') return;
-  // Scrolling over the knob turns it instead of zooming.
+  if (c !== 'DIAL' && !props.wheelZoom) return;
   e.preventDefault();
   e.stopPropagation();
+  if (c !== 'DIAL') {
+    // Scrolling zooms between the fitted view and further out; the radio never fills more than the frame.
+    zoomOut = THREE.MathUtils.clamp(zoomOut * Math.exp(e.deltaY * 0.0015), 1, MAX_ZOOM_OUT);
+    idleSince = performance.now();
+    return;
+  }
+  // Scrolling over the knob turns it.
   wheelAcc += e.deltaY + e.deltaX;
   while (Math.abs(wheelAcc) >= 40) {
     const dir = wheelAcc > 0 ? -1 : 1;
@@ -135,17 +149,28 @@ function onKeyUp(e: KeyboardEvent) {
   if (k) radio.keyUp(k);
 }
 
-function flyTo(view: View, ms = 700) {
+const _dir = new THREE.Vector3();
+const _ideal = new THREE.Vector3();
+const _sph = new THREE.Spherical();
+
+function flyTo(view: View, ms = 750) {
   if (!controls) return;
-  const v = VIEWS[view];
-  const target = new THREE.Vector3(...v.target);
-  const pos = target.clone().add(new THREE.Vector3(...v.dir).normalize().multiplyScalar(fitDistance(v.dist)));
-  tween = { from: camera.position.clone(), to: pos, tFrom: controls.target.clone(), tTo: target, start: performance.now(), ms };
+  const dir = new THREE.Vector3(...VIEWS[view].dir).normalize();
+  const to = frameRadio(dir, camera.aspect, FOV, new THREE.Vector3()).target;
+  const from = new THREE.Spherical().setFromVector3(_dir.subVectors(camera.position, controls.target));
+  const toSph = new THREE.Spherical().setFromVector3(dir);
+  // Turn the short way round.
+  if (toSph.theta - from.theta > Math.PI) toSph.theta -= Math.PI * 2;
+  if (from.theta - toSph.theta > Math.PI) toSph.theta += Math.PI * 2;
+  tween = { from, to: toSph, tFrom: controls.target.clone(), tTo: to, zFrom: zoomOut, start: performance.now(), ms };
+  zoomOut = 1;
 }
 
-/** Narrow (portrait) viewports need the camera further back to keep the radio in frame. */
-function fitDistance(dist: number) {
-  return camera.aspect < 1 ? dist / Math.max(0.55, camera.aspect) : dist;
+/** Puts the camera at `dir` from `target`, at the fitted distance times the zoom. */
+function place(target: THREE.Vector3, dir: THREE.Vector3, zoom: number) {
+  controls.target.copy(target);
+  camera.position.copy(target).addScaledVector(dir, fitDistance(target, dir, camera.aspect, FOV) * zoom);
+  camera.lookAt(target);
 }
 
 function resize() {
@@ -169,13 +194,18 @@ function loop() {
   if (tween) {
     const k = Math.min(1, (now - tween.start) / tween.ms);
     const e = k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2;
-    camera.position.lerpVectors(tween.from, tween.to, e);
-    controls.target.lerpVectors(tween.tFrom, tween.tTo, e);
+    _sph.set(1, THREE.MathUtils.lerp(tween.from.phi, tween.to.phi, e), THREE.MathUtils.lerp(tween.from.theta, tween.to.theta, e));
+    _dir.setFromSpherical(_sph);
+    place(_ideal.lerpVectors(tween.tFrom, tween.tTo, e), _dir, THREE.MathUtils.lerp(tween.zFrom, 1, e));
     if (k >= 1) tween = null;
-  } else if (props.idleSpin && now - idleSince > 4000) {
-    controls.autoRotate = true;
+  } else {
+    if (props.idleSpin && now - idleSince > 4000) controls.autoRotate = true;
+    controls.update();
+    // Whatever the user did, re-centre and re-fit for the new angle and the current viewport.
+    _dir.subVectors(camera.position, controls.target).normalize();
+    frameRadio(_dir, camera.aspect, FOV, _ideal);
+    place(controls.target.lerp(_ideal, 1 - Math.exp(-dt * 10)), _dir, zoomOut);
   }
-  controls.update();
   renderer.render(scene, camera);
   updateCallout();
 }
@@ -215,7 +245,8 @@ onMounted(async () => {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
-  renderer.domElement.className = 'block size-full touch-none select-none outline-none';
+  // Absolutely positioned so the canvas's pixel size never feeds back into the layout (retina screens).
+  renderer.domElement.className = 'absolute inset-0 block size-full touch-none select-none outline-none';
   renderer.domElement.style.cursor = 'grab';
   el.appendChild(renderer.domElement);
 
@@ -232,13 +263,13 @@ onMounted(async () => {
   rim.position.set(-260, 120, -180);
   scene.add(rim);
 
-  camera = new THREE.PerspectiveCamera(30, 1, 1, 5000);
+  camera = new THREE.PerspectiveCamera(FOV, 1, 1, 5000);
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.09;
   controls.enablePan = false;
-  controls.minDistance = 90;
-  controls.maxDistance = 900;
+  // Zoom is automatic (see place()); scrolling only zooms out, in onWheel.
+  controls.enableZoom = false;
   controls.autoRotateSpeed = 0.8;
   controls.addEventListener('start', () => { tween = null; idleSince = performance.now(); controls.autoRotate = false; });
 
@@ -247,9 +278,8 @@ onMounted(async () => {
   model = buildRadio(renderer);
   scene.add(model.group);
   resize();
-  const v = VIEWS[props.view];
-  controls.target.set(...v.target);
-  camera.position.copy(new THREE.Vector3(...v.target).add(new THREE.Vector3(...v.dir).normalize().multiplyScalar(fitDistance(v.dist))));
+  const dir = new THREE.Vector3(...VIEWS[props.view].dir).normalize();
+  place(frameRadio(dir, camera.aspect, FOV).target, dir, 1);
   controls.update();
 
   const canvasEl = renderer.domElement;
@@ -285,7 +315,7 @@ defineExpose({ flyTo });
 </script>
 
 <template>
-  <div ref="host" class="relative size-full overflow-hidden" :lang="lang">
+  <div ref="host" class="absolute inset-0 overflow-hidden" :lang="lang">
     <div v-if="!ready && !failed" class="absolute inset-0 grid place-items-center text-sm text-muted">
       <span class="inline-flex items-center gap-2"><UIcon name="i-lucide-loader-circle" class="size-4 animate-spin" />{{ t({ en: 'Building the radio…', nl: 'De radio wordt gebouwd…' }) }}</span>
     </div>
