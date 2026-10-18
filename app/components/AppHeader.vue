@@ -5,6 +5,7 @@ const links = computed(() => [
   { label: t({ en: 'Lessons', nl: 'Lessen' }), to: to('/'), active: route.path === to('/') || route.path.includes('/lessons/') },
   { label: t({ en: 'Free play', nl: 'Vrij spelen' }), to: to('/play'), active: route.path.endsWith('/play') },
   { label: t({ en: 'Frequencies', nl: 'Frequenties' }), to: to('/frequencies'), active: route.path.endsWith('/frequencies') },
+  { label: t({ en: 'Glossary', nl: 'Woordenlijst' }), to: to('/glossary'), active: route.path.endsWith('/glossary') },
 ]);
 </script>
 

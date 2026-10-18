@@ -23,3 +23,20 @@
     radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--ui-bg) 100%, transparent) 0%, transparent 70%),
     linear-gradient(180deg, var(--ui-bg-muted), var(--app-bg));
 }
+
+/* A clickable glossary word in lesson text. */
+.glossary-term {
+  display: inline;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline dotted;
+  text-decoration-color: color-mix(in srgb, var(--ui-secondary) 85%, transparent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.22em;
+  cursor: help;
+  border-radius: 0.2rem;
+}
+.glossary-term:hover,
+.glossary-term[data-state='open'] { background: color-mix(in srgb, var(--ui-secondary) 16%, transparent); }
+.glossary-term:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 2px; }
