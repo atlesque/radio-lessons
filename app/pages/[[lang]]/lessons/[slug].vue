@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { View } from '~/radio/controls';
 import { createSession } from '~/radio/session';
-import { LESSONS, lessonBySlug } from '~/lessons/lessons';
+import { LESSONS, lessonBySlug, lessonSig } from '~/lessons/lessons';
 import { packRadio, unpackRadio } from '~/progress/snapshot';
 
 definePageMeta({
@@ -40,7 +40,7 @@ function syncUrl(step: number | 'done') {
 const run = useLessonRun(lesson, session, {
   onStep: (i, radio) => {
     syncUrl(i + 1);
-    progress.setPosition(lesson.value.slug, i, packRadio(radio));
+    progress.setPosition(lesson.value.slug, i, packRadio(radio), lessonSig(lesson.value));
   },
   onFinish: () => syncUrl('done'),
 });
@@ -52,7 +52,9 @@ onMounted(() => {
   const slug = lesson.value.slug;
   const q = pageQuery.read().get('step');
   if (q === 'done') { run.start({ finished: true }); return; }
-  const saved = progress.resumeOf(slug);
+  // A position saved in an older version of this lesson no longer fits its steps: ignore it.
+  const stored = progress.resumeOf(slug);
+  const saved = stored && stored.sig === lessonSig(lesson.value) ? stored : null;
   const asked = Number(q);
   const step = Number.isInteger(asked) && asked >= 1 ? asked - 1 : saved?.step ?? 0;
   // The saved radio belongs to the saved step; for any other step, start from the lesson's setup.

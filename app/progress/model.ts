@@ -10,7 +10,8 @@ export interface PackedRadio {
   mem: [number, number, string, string][];
 }
 
-export interface Resume { step: number; radio: PackedRadio | null; at: number }
+/** `sig` identifies the version of the lesson the position was saved in (see lessonSig). */
+export interface Resume { step: number; radio: PackedRadio | null; at: number; sig?: string }
 
 export interface ProgressData {
   v: 2;
@@ -31,7 +32,9 @@ export function normaliseProgress(raw: unknown): ProgressData {
   const resume: Record<string, Resume> = {};
   if (r.resume && typeof r.resume === 'object') {
     for (const [slug, v] of Object.entries(r.resume)) {
-      if (v && Number.isFinite(v.step) && Number.isFinite(v.at)) resume[slug] = { step: v.step, radio: v.radio && Array.isArray(v.radio.mem) ? v.radio : null, at: v.at };
+      if (v && Number.isFinite(v.step) && Number.isFinite(v.at)) {
+        resume[slug] = { step: v.step, radio: v.radio && Array.isArray(v.radio.mem) ? v.radio : null, at: v.at, ...(typeof v.sig === 'string' ? { sig: v.sig } : {}) };
+      }
     }
   }
   return { v: 2, done, last, resume };

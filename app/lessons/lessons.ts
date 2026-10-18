@@ -150,7 +150,7 @@ export const LESSONS: Lesson[] = [
         body: L('Slide the cover back on: **click the cover** below the radio.', 'Schuif het klepje er weer op: **klik op het klepje** onder de radio.'),
         check: (r) => r.state.batteries && !r.state.coverOpen,
         demo: [{ act: 'cover' }],
-        skip: (r) => { if (!r.state.coverOpen) r.toggleCover(); if (!r.state.batteries) r.toggleCells(); r.toggleCover(); },
+        skip: (r) => { if (!r.state.batteries) { if (!r.state.coverOpen) r.toggleCover(); r.toggleCells(); } if (r.state.coverOpen) r.toggleCover(); },
       },
       {
         title: L('Screw on the antenna', 'Schroef de antenne erop'), target: ['ANT'], gesture: 'click', view: 'top',
@@ -902,4 +902,14 @@ export const LESSONS: Lesson[] = [
 ];
 
 export const lessonBySlug = (slug: string) => LESSONS.find((l) => l.slug === slug);
+
+/**
+ * A short fingerprint of a lesson's steps. A saved position only applies to the version of the lesson
+ * it was saved in; after the steps change, the saved step and radio would no longer match.
+ */
+export function lessonSig(lesson: Lesson) {
+  let h = 5381;
+  for (const c of lesson.steps.map((st) => `${st.title.en}|${st.check ? 'c' : ''}${st.explore ?? ''}`).join('/')) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0;
+  return `${lesson.steps.length}-${h.toString(36)}`;
+}
 export { BANDS, setIndex };

@@ -29,9 +29,9 @@ export function useProgress() {
     save();
   };
   /** Where a lesson was left: the step index and the radio as it was when that step began. */
-  const setPosition = (slug: string, step: number, radio: PackedRadio | null) => {
+  const setPosition = (slug: string, step: number, radio: PackedRadio | null, sig?: string) => {
     const at = Date.now();
-    data.value = { ...data.value, last: { slug, step, at }, resume: { ...data.value.resume, [slug]: { step, radio, at } } };
+    data.value = { ...data.value, last: { slug, step, at }, resume: { ...data.value.resume, [slug]: { step, radio, at, sig } } };
     save();
   };
   const resumeOf = (slug: string) => data.value.resume[slug] ?? null;

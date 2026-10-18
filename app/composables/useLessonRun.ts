@@ -23,6 +23,8 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session, hooks: Lesso
   let memo: Record<string, number> = {};
   let demo: DemoRun | null = null;
   let advanceTimer: ReturnType<typeof setTimeout> | null = null;
+  /** True while start() sets the radio up; its events must not complete (or skip) anything. */
+  let starting = false;
   /** True between completing a step and moving on; the glow is hidden only then, not on revisits. */
   const advancing = ref(false);
   /** The radio as it was when the current step began, for redoing the step. */
@@ -50,6 +52,11 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session, hooks: Lesso
     quizPick.value = null;
     snapshot = structuredClone(toRaw(session.radio.state));
     hooks.onStep?.(i, snapshot);
+    // Already true on arrival (say the radio is already on)? Show it as done, but never move on by itself.
+    const st = lesson.value.steps[i];
+    if (st?.check && !completed.value[i] && st.check(session.radio, null, memo)) {
+      completed.value = completed.value.map((c, j) => (j === i ? true : c));
+    }
   }
 
   /** Un-marks the current step and puts the radio back as it was when the step began. */
@@ -57,7 +64,9 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session, hooks: Lesso
     clearTimer();
     cancelDemo();
     session.input.releaseAll();
+    starting = true;
     if (snapshot) session.radio.load(structuredClone(snapshot));
+    starting = false;
     completed.value = completed.value.map((c, i) => (i === index.value ? false : c));
     memo = {};
     quizPick.value = null;
@@ -71,18 +80,27 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session, hooks: Lesso
     clearTimer();
     cancelDemo();
     session.input.releaseAll();
+    starting = true;
     session.radio.load(opts.radio ?? lesson.value.setup());
     const count = lesson.value.steps.length;
     const step = Math.max(0, Math.min(count - 1, opts.step ?? 0));
+    // Starting part-way without a saved radio: do what the earlier steps would have done (cells in, antenna on).
+    if (!opts.radio) for (let i = 0; i < (opts.finished ? count : step); i++) lesson.value.steps[i]!.skip?.(session.radio);
     completed.value = lesson.value.steps.map((_, i) => !!opts.finished || i < step);
     finished.value = !!opts.finished;
+    starting = false;
     enterStep(opts.finished ? count - 1 : step);
   }
 
   function complete(auto: boolean) {
     if (completed.value[index.value]) return;
     completed.value = completed.value.map((c, i) => (i === index.value ? true : c));
-    if (auto) { advancing.value = true; advanceTimer = setTimeout(next, 1200); }
+    if (auto) {
+      advancing.value = true;
+      // Only ever moves on from this same step, and only while it's still done.
+      const at = index.value;
+      advanceTimer = setTimeout(() => { if (index.value === at && completed.value[at] && !finished.value) next(); }, 1200);
+    }
   }
 
   function next() {
@@ -122,7 +140,7 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session, hooks: Lesso
   }
 
   const evaluate = (e: Parameters<NonNullable<Lesson['steps'][number]['check']>>[1]) => {
-    if (finished.value || completed.value[index.value]) return;
+    if (starting || finished.value || completed.value[index.value]) return;
     const s = step.value;
     if (s.check && s.check(session.radio, e, memo)) complete(true);
   };
