@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "radio-lessons",
+  "account_id": "df08931372f873bc0c8edb7679dc0cf4",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": { "directory": ".output/public", "not_found_handling": "404-page", "html_handling": "drop-trailing-slash" },
+  "routes": [{ "pattern": "radio-lessons.atlesque.dev", "custom_domain": true }]
+}

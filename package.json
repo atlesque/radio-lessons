@@ -1,0 +1,26 @@
+{
+  "name": "radio-lessons",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt generate",
+    "preview": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@iconify-json/lucide": "1.2.145",
+    "@nuxt/ui": "4.12.0",
+    "nuxt": "4.6.1",
+    "tailwindcss": "4.3.3",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "@types/three": "0.186.0",
+    "typescript": "5.9.3",
+    "vue-tsc": "3.3.13",
+    "wrangler": "4.151.0"
+  }
+}
