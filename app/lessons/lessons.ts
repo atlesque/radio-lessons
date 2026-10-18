@@ -123,21 +123,44 @@ export const LESSONS: Lesson[] = [
     title: L('Batteries, antenna and power', 'Batterijen, antenne en aanzetten'),
     summary: L('Get the radio ready and switch it on and off.', 'Maak de radio klaar en zet hem aan en uit.'),
     intro: L('Before you can listen, the radio needs power and an antenna.', 'Voor je kunt luisteren, heeft de radio stroom en een antenne nodig.'),
-    setup: () => ({ power: false }),
+    setup: () => ({ power: false, batteries: false, coverOpen: false, antenna: false }),
     steps: [
       {
-        title: L('Put in two AA cells', 'Plaats twee AA-cellen'), target: ['BATT'], view: 'back',
+        title: L('Slide off the battery cover', 'Schuif het batterijklepje eraf'), target: ['BATT'], gesture: 'click', view: 'back',
         body: L(
-          'Slide off the battery cover and put in two AA cells, matching the + and − marks. Rechargeable **NiMH** cells are best; alkaline cells work too.\n\n- never mix old and new cells, or different brands\n- take the cells out if you won\'t use the radio for weeks: it draws a little current even when off',
-          'Schuif het batterijklepje open en plaats twee AA-cellen volgens de + en −. Herlaadbare **NiMH**-cellen zijn het best; alkaline werkt ook.\n\n- meng nooit oude en nieuwe cellen, of verschillende merken\n- haal de cellen eruit als je de radio weken niet gebruikt: ook uitgeschakeld verbruikt hij een beetje stroom',
+          'The radio runs on two AA cells, which go in at the back. Slide the battery cover off: **click the glowing cover**.',
+          'De radio werkt op twee AA-cellen, die achteraan in de radio gaan. Schuif het batterijklepje eraf: **klik op het oplichtende klepje**.',
         ),
+        check: (r) => r.state.coverOpen,
+        demo: [{ act: 'cover' }],
+        skip: (r) => { if (!r.state.coverOpen) r.toggleCover(); },
       },
       {
-        title: L('Screw on the antenna', 'Schroef de antenne erop'), target: ['ANT'], view: 'top',
+        title: L('Put in two AA cells', 'Plaats twee AA-cellen'), target: ['CELLS'], gesture: 'click', view: 'back',
         body: L(
-          'Screw the antenna on clockwise until it is finger-tight; no tools. Keep the rubber cover on the [SP] jack when you\'re not using earphones, against dust and moisture.',
-          'Schroef de antenne met de klok mee vast tot ze handvast zit; geen gereedschap. Laat het rubberen kapje op de [SP]-aansluiting als je geen oortjes gebruikt, tegen stof en vocht.',
+          'Put in two AA cells, matching the + and − marks. Rechargeable **NiMH** cells are best; alkaline cells work too.\n\n- never mix old and new cells, or different brands\n- take the cells out if you won\'t use the radio for weeks: it draws a little current even when off\n\n**Click the compartment** to put them in.',
+          'Plaats twee AA-cellen volgens de + en −. Herlaadbare **NiMH**-cellen zijn het best; alkaline werkt ook.\n\n- meng nooit oude en nieuwe cellen, of verschillende merken\n- haal de cellen eruit als je de radio weken niet gebruikt: ook uitgeschakeld verbruikt hij een beetje stroom\n\n**Klik op het batterijvak** om ze erin te steken.',
         ),
+        check: (r) => r.state.batteries,
+        demo: [{ act: 'cells' }],
+        skip: (r) => { if (!r.state.coverOpen) r.toggleCover(); if (!r.state.batteries) r.toggleCells(); },
+      },
+      {
+        title: L('Close the cover', 'Sluit het klepje'), target: ['BATT'], gesture: 'click', view: 'back',
+        body: L('Slide the cover back on: **click the cover** below the radio.', 'Schuif het klepje er weer op: **klik op het klepje** onder de radio.'),
+        check: (r) => r.state.batteries && !r.state.coverOpen,
+        demo: [{ act: 'cover' }],
+        skip: (r) => { if (!r.state.coverOpen) r.toggleCover(); if (!r.state.batteries) r.toggleCells(); r.toggleCover(); },
+      },
+      {
+        title: L('Screw on the antenna', 'Schroef de antenne erop'), target: ['ANT'], gesture: 'click', view: 'top',
+        body: L(
+          'The antenna screws onto the gold **SMA** connector on top, clockwise and finger-tight; no tools. **Click the connector** to screw it on.\n\nKeep the rubber cover on the [SP] jack when you\'re not using earphones, against dust and moisture.',
+          'De antenne schroef je met de klok mee op de gouden **SMA**-aansluiting bovenaan, handvast; geen gereedschap. **Klik op de aansluiting** om ze erop te schroeven.\n\nLaat het rubberen kapje op de [SP]-aansluiting als je geen oortjes gebruikt, tegen stof en vocht.',
+        ),
+        check: (r) => r.state.antenna,
+        demo: [{ act: 'antenna' }],
+        skip: (r) => r.attachAntenna(),
       },
       {
         title: L('Switch on', 'Zet hem aan'), target: ['PWR'], gesture: 'hold', view: 'front', tip: TIP_HOLD,

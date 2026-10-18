@@ -61,7 +61,8 @@ function pick(e: { clientX: number; clientY: number }): Control | null {
   const r = renderer.domElement.getBoundingClientRect();
   pointer.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   raycaster.setFromCamera(pointer, camera);
-  const hit = raycaster.intersectObjects(model.pickables, true)[0];
+  const shown = (o: THREE.Object3D | null): boolean => !o || (o.visible && shown(o.parent));
+  const hit = raycaster.intersectObjects(model.pickables, true).find((h) => shown(h.object));
   return (hit?.object.userData.control as Control | undefined) ?? null;
 }
 
@@ -76,6 +77,10 @@ function onPointerDown(e: PointerEvent) {
   try { renderer!.domElement.setPointerCapture(e.pointerId); } catch { /* pointer already gone */ }
   if (c === 'DIAL') { dialDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, acc: 0 }; emit('pick', c); return; }
   if (isKey(c)) input.down(c, `p${e.pointerId}`);
+  // The physical parts: slide the cover, swap the cells, screw on the antenna.
+  if (c === 'BATT') radio.toggleCover();
+  if (c === 'CELLS') radio.toggleCells();
+  if (c === 'ANT' && !radio.state.antenna) radio.attachAntenna();
   emit('pick', c);
 }
 
@@ -156,7 +161,7 @@ const _sph = new THREE.Spherical();
 function flyTo(view: View, ms = 750) {
   if (!controls) return;
   const dir = new THREE.Vector3(...VIEWS[view].dir).normalize();
-  const to = frameRadio(dir, camera.aspect, FOV, new THREE.Vector3()).target;
+  const to = frameRadio(dir, camera.aspect, FOV, new THREE.Vector3(), fit()).target;
   const from = new THREE.Spherical().setFromVector3(_dir.subVectors(camera.position, controls.target));
   const toSph = new THREE.Spherical().setFromVector3(dir);
   // Turn the short way round.
@@ -166,10 +171,16 @@ function flyTo(view: View, ms = 750) {
   zoomOut = 1;
 }
 
-/** Puts the camera at `dir` from `target`, at the fitted distance times the zoom. */
-function place(target: THREE.Vector3, dir: THREE.Vector3, zoom: number) {
+/** What the camera must keep in frame: the antenna only when it's on, the cover when it's slid off. */
+const fit = () => ({ antenna: radio.state.antenna, coverOff: radio.state.coverOpen });
+
+let distance = 0;
+/** Puts the camera at `dir` from `target`, at the fitted distance times the zoom (eased when `ease` > 0). */
+function place(target: THREE.Vector3, dir: THREE.Vector3, zoom: number, ease = 0) {
   controls.target.copy(target);
-  camera.position.copy(target).addScaledVector(dir, fitDistance(target, dir, camera.aspect, FOV) * zoom);
+  const goal = fitDistance(target, dir, camera.aspect, FOV, fit()) * zoom;
+  distance = ease > 0 && distance > 0 ? distance + (goal - distance) * ease : goal;
+  camera.position.copy(target).addScaledVector(dir, distance);
   camera.lookAt(target);
 }
 
@@ -190,7 +201,7 @@ function loop() {
   last = now;
   for (const k of KEYS) model.setPressed(k, radio.isHeld(k));
   model.drawLcd(radio.lcd(now));
-  model.update(dt, now / 1000, props.highlight, hovered);
+  model.update(dt, now / 1000, props.highlight, hovered, radio.state);
   if (tween) {
     const k = Math.min(1, (now - tween.start) / tween.ms);
     const e = k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2;
@@ -203,8 +214,10 @@ function loop() {
     controls.update();
     // Whatever the user did, re-centre and re-fit for the new angle and the current viewport.
     _dir.subVectors(camera.position, controls.target).normalize();
-    frameRadio(_dir, camera.aspect, FOV, _ideal);
-    place(controls.target.lerp(_ideal, 1 - Math.exp(-dt * 10)), _dir, zoomOut);
+    frameRadio(_dir, camera.aspect, FOV, _ideal, fit());
+    // Eased, so the camera glides back when the antenna goes on or the cover comes off.
+    const k = 1 - Math.exp(-dt * 10);
+    place(controls.target.lerp(_ideal, k), _dir, zoomOut, k);
   }
   renderer.render(scene, camera);
   updateCallout();
@@ -279,7 +292,7 @@ onMounted(async () => {
   scene.add(model.group);
   resize();
   const dir = new THREE.Vector3(...VIEWS[props.view].dir).normalize();
-  place(frameRadio(dir, camera.aspect, FOV).target, dir, 1);
+  place(frameRadio(dir, camera.aspect, FOV, new THREE.Vector3(), fit()).target, dir, 1);
   controls.update();
 
   const canvasEl = renderer.domElement;

@@ -19,6 +19,12 @@ export async function runDemo(actions: Demo[], radio: Radio, run: DemoRun) {
     else if ('down' in a) { radio.keyDown(a.down); await sleep(150); }
     else if ('up' in a) { radio.keyUp(a.up); await sleep(150); }
     else if ('wait' in a) await sleep(a.wait);
+    else if ('act' in a) {
+      if (a.act === 'cover') radio.toggleCover();
+      else if (a.act === 'cells') radio.toggleCells();
+      else radio.attachAntenna();
+      await sleep(900);
+    }
     else if ('dial' in a) { for (let i = 0; i < Math.abs(a.dial); i++) if (!(await turn(a.dial > 0 ? 1 : -1, 180))) return; }
     else if ('band' in a) { for (let i = 0; i < BANDS.length && radio.bandId !== a.band; i++) if (!(await press('BAND'))) return; }
     else if ('mode' in a) { for (let i = 0; i < 3 && radio.mode !== a.mode; i++) if (!(await press('MODE'))) return; }

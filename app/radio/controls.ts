@@ -3,7 +3,7 @@
 import type { L } from './bands';
 import type { Key } from './sim';
 
-export type Control = Key | 'DIAL' | 'ANT' | 'SP' | 'DC' | 'LCD' | 'BATT' | 'SPEAKER';
+export type Control = Key | 'DIAL' | 'ANT' | 'SP' | 'DC' | 'LCD' | 'BATT' | 'CELLS' | 'SPEAKER';
 
 export const CONTROL_INFO: Record<Control, { name: L; short: L }> = {
   PWR: { name: { en: '[PWR] power key', nl: '[PWR]-aan/uit-toets' }, short: { en: 'Hold 1 s to switch on or off.', nl: 'Houd 1 s in om aan of uit te zetten.' } },
@@ -20,7 +20,8 @@ export const CONTROL_INFO: Record<Control, { name: L; short: L }> = {
   SP: { name: { en: '[SP] earphone jack', nl: '[SP]-oortelefoonaansluiting' }, short: { en: '3.5 mm jack under the rubber cover; the speaker goes quiet when something is plugged in.', nl: '3,5mm-aansluiting onder het rubberen kapje; de luidspreker zwijgt als er iets in zit.' } },
   DC: { name: { en: '[DC 6V] power jack', nl: '[DC 6V]-voedingsaansluiting' }, short: { en: 'For the charger. Only charge NiMH or NiCd cells, never alkaline.', nl: 'Voor de lader. Laad alleen NiMH- of NiCd-cellen, nooit alkaline.' } },
   LCD: { name: { en: 'Function display', nl: 'Display' }, short: { en: 'Frequency, mode, signal strength and status icons.', nl: 'Frequentie, modus, signaalsterkte en statusiconen.' } },
-  BATT: { name: { en: 'Battery cover', nl: 'Batterijklepje' }, short: { en: 'Two AA cells go in here.', nl: 'Hier gaan twee AA-cellen in.' } },
+  BATT: { name: { en: 'Battery cover', nl: 'Batterijklepje' }, short: { en: 'Click to slide it off or back on.', nl: 'Klik om het eraf of terug op te schuiven.' } },
+  CELLS: { name: { en: 'Battery compartment', nl: 'Batterijvak' }, short: { en: 'Two AA cells go in here. Click to put them in or take them out.', nl: 'Hier gaan twee AA-cellen in. Klik om ze erin te steken of eruit te halen.' } },
   SPEAKER: { name: { en: 'Speaker', nl: 'Luidspreker' }, short: { en: 'The built-in speaker.', nl: 'De ingebouwde luidspreker.' } },
 };
 
@@ -39,5 +40,5 @@ export const VIEWS: Record<View, { dir: [number, number, number] }> = {
 
 /** Which view shows a control best. */
 export const CONTROL_VIEW: Partial<Record<Control, View>> = {
-  FUNC: 'left', SQL: 'left', DC: 'right', BATT: 'back', ANT: 'top', DIAL: 'top', SP: 'top',
+  FUNC: 'left', SQL: 'left', DC: 'right', BATT: 'back', CELLS: 'back', ANT: 'top', DIAL: 'top', SP: 'top',
 };

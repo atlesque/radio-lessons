@@ -18,6 +18,7 @@ export type Demo =
   | { step: number }
   | { sql: number }
   | { scanType: 'ALL' | 'BAND' }
+  | { act: 'cover' | 'cells' | 'antenna' }
   | { writeCh: number }
   | { set: string; value: unknown };
 
@@ -38,6 +39,8 @@ export interface Step {
   explore?: Control;
   quiz?: Quiz;
   demo?: Demo[];
+  /** Applied when the step is skipped, so later steps still work (cells in, antenna on). */
+  skip?: (r: Radio) => void;
 }
 
 export type Setup = Partial<State> & { setPatch?: Partial<Settings> };

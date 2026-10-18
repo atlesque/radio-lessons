@@ -87,6 +87,7 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session, hooks: Lesso
 
   function next() {
     clearTimer();
+    if (!completed.value[index.value]) step.value.skip?.(session.radio);
     if (kind.value === 'info' || kind.value === 'action' || kind.value === 'explore') completed.value = completed.value.map((c, i) => (i === index.value ? true : c));
     if (index.value < lesson.value.steps.length - 1) enterStep(index.value + 1);
     else { finished.value = true; cancelDemo(); markDone(lesson.value.slug); hooks.onFinish?.(); }

@@ -55,6 +55,10 @@ export interface State {
   scanType: ScanKind;
   scan: null | { kind: ScanKind; dir: 1 | -1; pausedAt: number; lostAt: number; last: number };
   monitor: boolean;
+  /** The physical radio: cells in, battery cover open, antenna screwed on. */
+  batteries: boolean;
+  coverOpen: boolean;
+  antenna: boolean;
   set: Settings;
   held: Record<string, number>;
 }
@@ -69,7 +73,8 @@ export type RadioEvent =
   | { type: 'scanStop' }
   | { type: 'monitor' }
   | { type: 'reset'; kind: 'partial' | 'all' }
-  | { type: 'denied'; key: Key | 'DIAL' };
+  | { type: 'denied'; key: Key | 'DIAL' }
+  | { type: 'physical'; what: 'cover' | 'cells' | 'antenna' };
 
 export interface Lcd {
   on: boolean;
@@ -109,6 +114,7 @@ export const defaultState = (): State => ({
   band: 5, freqs: BANDS.map((b) => b.start), modes: BANDS.map((b) => b.mode), steps: BANDS.map((b) => b.step),
   memMode: false, memCh: 0, mem: Array.from({ length: MEM_SIZE }, () => null),
   screen: 'normal', writeCh: 0, setItem: 0, setShownAt: 0, scanType: 'ALL', scan: null, monitor: false,
+  batteries: true, coverOpen: false, antenna: true,
   set: defaultSettings(), held: {},
 });
 
@@ -196,6 +202,29 @@ export class Radio {
     this.tune(hz, mode);
     this.lastActivity = performance.now();
     this.changed();
+  }
+
+  // ---------- the physical radio ----------
+  /** Slide the battery cover off, or back on. */
+  toggleCover() {
+    this.state.coverOpen = !this.state.coverOpen;
+    this.emit({ type: 'physical', what: 'cover' });
+  }
+
+  /** Put the two AA cells in, or take them out (only with the cover off). */
+  toggleCells() {
+    const s = this.state;
+    if (!s.coverOpen) return;
+    s.batteries = !s.batteries;
+    if (!s.batteries) { s.power = false; s.scan = null; s.screen = 'normal'; s.monitor = false; }
+    this.emit({ type: 'physical', what: 'cells' });
+  }
+
+  /** Screw the antenna onto the SMA connector. */
+  attachAntenna() {
+    if (this.state.antenna) return;
+    this.state.antenna = true;
+    this.emit({ type: 'physical', what: 'antenna' });
   }
 
   tune(hz: number, mode?: Mode) {
@@ -333,6 +362,7 @@ export class Radio {
     this.longFired.add(key);
     if (key === 'PWR') {
       if (!s.power) {
+        if (!s.batteries) return; // nothing happens without cells
         s.power = true;
         // Resets happen at power-on with keys held (manual p. 53).
         if (this.isHeld('FUNC') && this.isHeld('VM')) { this.allReset(); this.emit({ type: 'reset', kind: 'all' }); }
@@ -405,12 +435,13 @@ export class Radio {
   }
 
   private partialReset() {
-    const { mem, held } = this.state;
-    this.state = { ...defaultState(), power: true, mem, held };
+    const { mem, held, batteries, coverOpen, antenna } = this.state;
+    this.state = { ...defaultState(), power: true, mem, held, batteries, coverOpen, antenna };
   }
 
   private allReset() {
-    this.state = { ...defaultState(), power: true, held: this.state.held };
+    const { held, batteries, coverOpen, antenna } = this.state;
+    this.state = { ...defaultState(), power: true, held, batteries, coverOpen, antenna };
   }
 
   // ---------- dial ----------
@@ -631,6 +662,8 @@ export class Radio {
       let v = st.strength * shape * shape;
       if (st.mode === 'AM' && this.bandId === 'AMBC' && s.set.antAm === 'BAR') v = Math.min(1, v * 1.6);
       if (s.att) v *= 0.35;
+      // Without the antenna only very strong signals get through (the bar antenna still works on AM broadcast).
+      if (!s.antenna && !(st.mode === 'AM' && this.bandId === 'AMBC' && s.set.antAm === 'BAR')) v *= 0.15;
       if (v > strength) { strength = v; best = st; }
     }
     const active = !!best && (!best.period || (now % best.period) < best.on!);

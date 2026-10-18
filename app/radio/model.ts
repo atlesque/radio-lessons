@@ -12,6 +12,9 @@ const W = 58, H = 86, D = 27;
 const FRONT = D / 2, TOP = H / 2, SIDE = W / 2;
 const ORANGE = '#f0783c';
 
+/** What the viewer tells the model about the physical radio each frame. */
+export interface Physical { coverOpen: boolean; batteries: boolean; antenna: boolean }
+
 export interface RadioModel {
   group: THREE.Group;
   pickables: THREE.Object3D[];
@@ -19,7 +22,7 @@ export interface RadioModel {
   drawLcd: (lcd: Lcd) => void;
   setPressed: (key: Key, pressed: boolean) => void;
   turnDial: (dir: 1 | -1) => void;
-  update: (dt: number, t: number, highlight: Control[], hover: Control | null) => void;
+  update: (dt: number, t: number, highlight: Control[], hover: Control | null, physical: Physical) => void;
   dispose: () => void;
 }
 
@@ -233,10 +236,17 @@ export function buildRadio(renderer: THREE.WebGLRenderer): RadioModel {
   const antProfile = [[0, -2], [4.5, -2], [4.5, 1.5], [4.35, 12], [3.9, 18], [3.2, 30], [2.85, 48], [2.55, 85], [2.25, 125], [2.0, 152], [1.6, 158.5], [0.9, 160.3], [0, 160.8]]
     .map(([r, y]) => new THREE.Vector2(r!, y!));
   const antMat = mat('#121315', 0.82);
-  const antenna = new THREE.Mesh(track(new THREE.LatheGeometry(antProfile, 40)), antMat);
+  const antenna = new THREE.Group();
   antenna.position.set(-14.3, TOP, 0.6);
+  antenna.add(new THREE.Mesh(track(new THREE.LatheGeometry(antProfile, 40)), antMat));
   group.add(antenna);
   tag(antenna, 'ANT', antMat);
+  // The gold SMA connector the antenna screws onto (hidden inside the antenna's boot once it's on).
+  const smaMat = mat('#c9a14a', 0.32, { metalness: 0.85 });
+  const sma = new THREE.Mesh(track(new THREE.CylinderGeometry(3, 3, 7, 28)), smaMat);
+  sma.position.set(-14.3, TOP + 3.5, 0.6);
+  group.add(sma);
+  tag(sma, 'ANT', smaMat);
 
   const dial = new THREE.Group();
   dial.position.set(14.3, TOP, 0.6);
@@ -336,10 +346,6 @@ export function buildRadio(renderer: THREE.WebGLRenderer): RadioModel {
   // Slot in the belt-clip loop.
   b.fillStyle = 'rgba(0,0,0,0.6)';
   b.beginPath(); b.roundRect(bx(11), by(34), 22 * DPX, 13 * DPX, 2 * DPX); b.fill();
-  // Battery cover seam and latch.
-  b.fillStyle = 'rgba(0,0,0,0.75)';
-  b.fillRect(0, by(-6.2), fw * DPX, 0.35 * DPX);
-  b.beginPath(); b.roundRect(bx(7.5), by(-31), 15 * DPX, 7 * DPX, 2 * DPX); b.fill();
   // Rating label (serial number left blank).
   b.fillStyle = '#26272a';
   b.beginPath(); b.roundRect(bx(22.5), by(17.4), 45 * DPX, 21.6 * DPX, 1.2 * DPX); b.fill();
@@ -388,7 +394,55 @@ export function buildRadio(renderer: THREE.WebGLRenderer): RadioModel {
     tag(p, control);
     overlays.set(control, m);
   };
-  hotspot('BATT', 50, 36, [0, -24.5, -FRONT - 0.08], Math.PI);
+  // ---------- battery cover and compartment ----------
+  const coverMat = mat('#1b1c1f', 0.6, { clearcoat: 0.1 });
+  const cover = new THREE.Group();
+  const coverMesh = new THREE.Mesh(track(new RoundedBoxGeometry(53, 36, 1.8, 2, 0.8)), coverMat);
+  cover.add(coverMesh);
+  const latch = new THREE.Mesh(track(new RoundedBoxGeometry(14, 5, 1.2, 2, 0.5)), coverMat);
+  latch.position.set(0, -14.5, -0.9);
+  cover.add(latch);
+  cover.position.set(0, -24.6, -FRONT - 0.55);
+  group.add(cover);
+  tag(cover, 'BATT', coverMat);
+
+  const bay = new THREE.Group();
+  const bayMat = mat('#08080a', 0.9);
+  const plate = new THREE.Mesh(track(new THREE.PlaneGeometry(51, 34)), bayMat);
+  plate.rotation.y = Math.PI;
+  plate.position.set(0, -24.6, -FRONT - 0.04);
+  bay.add(plate);
+  const springMat = mat('#b9bcc2', 0.3, { metalness: 0.9 });
+  for (const [x, y] of [[-23.5, -16.6], [23.5, -16.6], [-23.5, -32.6], [23.5, -32.6]] as const) {
+    const spring = new THREE.Mesh(track(new THREE.BoxGeometry(1.2, 6, 3)), springMat);
+    spring.position.set(x, y, -FRONT - 0.6);
+    bay.add(spring);
+  }
+  // Two AA cells lying across the radio, head to tail, sunk mostly into the body.
+  const cells = new THREE.Group();
+  const cellMat = mat('#2e6a3c', 0.45, { clearcoat: 0.6 });
+  const bandMat = mat('#e9e6dc', 0.5);
+  for (const [y, dir] of [[-16.6, 1], [-32.6, -1]] as const) {
+    const cell = new THREE.Group();
+    const can = new THREE.Mesh(track(new THREE.CylinderGeometry(7, 7, 44, 32)), cellMat);
+    can.rotation.z = Math.PI / 2;
+    cell.add(can);
+    const band = new THREE.Mesh(track(new THREE.CylinderGeometry(7.05, 7.05, 10, 32)), bandMat);
+    band.rotation.z = Math.PI / 2;
+    band.position.x = -dir * 8;
+    cell.add(band);
+    const nub = new THREE.Mesh(track(new THREE.CylinderGeometry(2.6, 2.6, 2.4, 20)), springMat);
+    nub.rotation.z = Math.PI / 2;
+    nub.position.x = dir * 23;
+    cell.add(nub);
+    cell.position.set(0, y, -FRONT + 5.6);
+    cells.add(cell);
+  }
+  bay.add(cells);
+  bay.visible = false;
+  group.add(bay);
+  tag(bay, 'CELLS', bayMat);
+  tag(cells, 'CELLS', cellMat);
   hotspot('SPEAKER', 44, 30, [0, -24, FRONT + 0.08]);
   hotspot('LCD', lw + 2, lh + 2, [lx + lw / 2, ly + lh / 2, FRONT + 0.7]);
 
@@ -397,11 +451,15 @@ export function buildRadio(renderer: THREE.WebGLRenderer): RadioModel {
     BAND: new THREE.Vector3(-12.4, 2, FRONT + 1.5), TS: new THREE.Vector3(-1.4, 4.3, FRONT + 1.5), MODE: new THREE.Vector3(9.6, 4.3, FRONT + 1.5),
     VM: new THREE.Vector3(20.6, 4.3, FRONT + 1.5), FUNC: new THREE.Vector3(-SIDE - 1.8, 29.2, 1.5), SQL: new THREE.Vector3(-SIDE - 1.8, 16.4, 1.5),
     DIAL: new THREE.Vector3(14.3, TOP + 13, 0.6), ANT: new THREE.Vector3(-14.3, TOP + 60, 0.6), SP: new THREE.Vector3(-0.5, TOP + 2, 0.6),
-    DC: new THREE.Vector3(SIDE + 1.3, 12.6, 2.5), LCD: new THREE.Vector3(0.5, 26.7, FRONT + 0.7), BATT: new THREE.Vector3(0, -24, -FRONT - 0.2),
+    DC: new THREE.Vector3(SIDE + 1.3, 12.6, 2.5), LCD: new THREE.Vector3(0.5, 26.7, FRONT + 0.7), BATT: new THREE.Vector3(0, -24, -FRONT - 1.5),
+    CELLS: new THREE.Vector3(0, -24, -FRONT - 1.5),
     SPEAKER: new THREE.Vector3(0, -24, FRONT + 0.2),
   };
 
   let dialTarget = 0;
+  let coverT = 0; // 0 = on the radio, 1 = slid off below it
+  let antT = 1; // 0 = off, 1 = screwed on
+  let antWas = true;
   let lastLcd = '';
   const lime = new THREE.Color('#d4f578');
   const white = new THREE.Color('#ffffff');
@@ -419,7 +477,23 @@ export function buildRadio(renderer: THREE.WebGLRenderer): RadioModel {
     },
     setPressed(key, down) { pressed.set(key, down ? 1 : 0); },
     turnDial(dir) { dialTarget -= dir * (Math.PI * 2) / 24; },
-    update(dt, t, highlight, hover) {
+    update(dt, t, highlight, hover, physical) {
+      // The cover slides down and off; the antenna drops in and screws down.
+      coverT += ((physical.coverOpen ? 1 : 0) - coverT) * Math.min(1, dt * 6);
+      cover.position.y = -24.6 - coverT * 42;
+      cover.position.z = -FRONT - 0.55 - Math.sin(Math.min(1, coverT * 2) * Math.PI / 2) * 3;
+      bay.visible = coverT > 0.02;
+      // Point the lesson's "Click" label at the cover wherever it is.
+      anchors.BATT.set(0, cover.position.y, cover.position.z - 1);
+      cells.visible = physical.batteries;
+      if (physical.antenna && !antWas) antT = 0;
+      antWas = physical.antenna;
+      if (physical.antenna) antT = Math.min(1, antT + dt * 1.4);
+      const e = 1 - (1 - antT) ** 3;
+      antenna.visible = physical.antenna;
+      anchors.ANT.set(-14.3, TOP + (physical.antenna ? 60 : 7.5), 0.6);
+      antenna.position.y = TOP + (1 - e) * 26;
+      antenna.rotation.y = (1 - e) * Math.PI * 6;
       // Keys travel in and out; the dial eases to its detent.
       for (const [key, g] of keyMeshes) {
         const goal = pressed.get(key) ? 1 : 0;
