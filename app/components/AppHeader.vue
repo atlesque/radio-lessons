@@ -7,6 +7,14 @@ const links = computed(() => [
   { label: t({ en: 'Frequencies', nl: 'Frequenties' }), to: to('/frequencies'), active: route.path.endsWith('/frequencies') },
   { label: t({ en: 'Glossary', nl: 'Woordenlijst' }), to: to('/glossary'), active: route.path.endsWith('/glossary') },
 ]);
+// Each language in its own name; the current one is ticked and can't be picked.
+const languages = computed(() => (['en', 'nl'] as const).map((code) => ({
+  label: code === 'en' ? 'English' : 'Nederlands',
+  type: 'checkbox' as const,
+  checked: lang.value === code,
+  disabled: lang.value === code,
+  onSelect: () => navigateTo(other.value),
+})));
 </script>
 
 <template>
@@ -22,16 +30,9 @@ const links = computed(() => [
         <UDropdownMenu :items="links.map((l) => ({ label: l.label, to: l.to }))" :content="{ align: 'end' }" class="sm:hidden">
           <UButton icon="i-lucide-menu" color="neutral" variant="ghost" size="sm" :aria-label="t({ en: 'Menu', nl: 'Menu' })" />
         </UDropdownMenu>
-        <UButton
-          :to="other"
-          :label="lang === 'nl' ? 'EN' : 'NL'"
-          icon="i-lucide-languages"
-          color="neutral"
-          variant="ghost"
-          size="sm"
-          :hreflang="lang === 'nl' ? 'en' : 'nl'"
-          :aria-label="lang === 'nl' ? 'Switch to English' : 'Schakel naar Nederlands'"
-        />
+        <UDropdownMenu :items="languages" :content="{ align: 'end' }">
+          <UButton icon="i-lucide-globe" color="neutral" variant="ghost" size="sm" square :aria-label="t({ en: 'Language: English', nl: 'Taal: Nederlands' })" :title="t({ en: 'Language', nl: 'Taal' })" />
+        </UDropdownMenu>
         <ThemeSwitch :labels="{ light: t({ en: 'Theme: light', nl: 'Thema: licht' }), dark: t({ en: 'Theme: dark', nl: 'Thema: donker' }), system: t({ en: 'Theme: automatic', nl: 'Thema: automatisch' }) }" />
       </div>
     </div>
