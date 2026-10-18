@@ -84,7 +84,8 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session) {
   function goTo(i: number) { finished.value = false; enterStep(i); }
 
   function pick(control: Control) {
-    if (kind.value === 'explore' && control === step.value.explore) complete(true);
+    // Clicking the right part moves straight on; there is nothing to watch happen on the radio.
+    if (kind.value === 'explore' && control === step.value.explore && !completed.value[index.value]) next();
   }
 
   function answer(i: number) {
