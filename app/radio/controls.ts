@@ -27,7 +27,7 @@ export const CONTROL_INFO: Record<Control, { name: L; short: L }> = {
 /** Camera presets: a direction from the target and a distance, in millimetres. */
 export type View = 'front' | 'overview' | 'left' | 'right' | 'top' | 'back' | 'angle' | 'leftTop';
 export const VIEWS: Record<View, { dir: [number, number, number]; target: [number, number, number]; dist: number }> = {
-  overview: { dir: [0.35, 0.18, 1], target: [0, 52, 0], dist: 520 },
+  overview: { dir: [0.35, 0.16, 1], target: [0, 62, 0], dist: 450 },
   front: { dir: [0, 0.05, 1], target: [0, 4, 0], dist: 250 },
   angle: { dir: [0.55, 0.3, 1], target: [0, 8, 0], dist: 270 },
   left: { dir: [-1, 0.12, 0.35], target: [0, 18, 0], dist: 210 },
