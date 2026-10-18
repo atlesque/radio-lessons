@@ -5,6 +5,7 @@ import type { Lesson } from '~/lessons/types';
 const props = defineProps<{ lesson: Lesson; number: number; total: number; run: LessonRun; next: Lesson | null }>();
 const { t, to } = useLang();
 const run = props.run;
+const account = useAccount();
 const showAll = ref(false);
 const stepCount = computed(() => props.lesson.steps.length);
 const doneCount = computed(() => run.completed.value.filter(Boolean).length);
@@ -133,6 +134,10 @@ watch(() => run.index.value, () => nextTick(() => card.value?.scrollIntoView({ b
     <section v-else class="rounded-lg border border-success/50 bg-default p-4 shadow-sm" aria-live="polite">
       <p class="flex items-center gap-2 text-sm font-semibold text-success"><UIcon name="i-lucide-circle-check" class="size-4" />{{ t({ en: 'Lesson complete', nl: 'Les afgewerkt' }) }}</p>
       <div class="mt-2 text-[0.95rem] text-toned"><RichText :text="t(lesson.outro)" /></div>
+      <p v-if="account.status.value === 'signed-out'" class="mt-3 text-sm text-muted">
+        {{ t({ en: 'Want this progress on your other devices too?', nl: 'Wil je deze voortgang ook op je andere toestellen?' }) }}
+        <button type="button" class="font-medium text-primary underline underline-offset-2" @click="account.signInOpen.value = true">{{ t({ en: 'Sign in', nl: 'Meld je aan' }) }}</button>
+      </p>
       <div class="mt-4 flex flex-wrap gap-2">
         <UButton v-if="next" :to="to(`/lessons/${next.slug}`)" trailing-icon="i-lucide-arrow-right" :label="`${t({ en: 'Next', nl: 'Volgende' })}: ${t(next.title)}`" />
         <UButton v-else :to="to('/play')" icon="i-lucide-gamepad-2" :label="t({ en: 'Free play', nl: 'Vrij spelen' })" />

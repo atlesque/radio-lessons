@@ -8,9 +8,17 @@ Live at https://radio-lessons.atlesque.dev
 
 - `pnpm install`, then `pnpm dev` (Nuxt dev server).
 - `pnpm build` writes the static site to `.output/public`; `pnpm preview` serves it with Wrangler.
-- `pnpm typecheck` runs vue-tsc.
+- `pnpm typecheck` runs vue-tsc on the app and tsc on the Worker.
 
-Cloudflare Workers Builds deploys every push to `main` (build `pnpm run build`, deploy `npx wrangler deploy`). The Worker only serves static assets (`wrangler.jsonc`), on the custom domain `radio-lessons.atlesque.dev`. `nitro.preset: 'static'` must stay, or Nitro switches to its Cloudflare preset inside Workers Builds and the deploy fails.
+Cloudflare Workers Builds deploys every push to `main` (build `pnpm run build`, deploy `npx wrangler deploy`), on the custom domain `radio-lessons.atlesque.dev`. The site is static (`.output/public`, served by the assets binding); only `/api/*` runs the Worker in `worker/` (`assets.run_worker_first`). `nitro.preset: 'static'` must stay, or Nitro switches to its Cloudflare preset inside Workers Builds and the deploy fails.
+
+### Accounts and saved progress
+
+- Sign-in is a magic link: `POST /api/auth/request` emails a one-time link (15 minutes) through Cloudflare Email Sending (`send_email` binding, from `radio-lessons@atlesque.dev`; `atlesque.dev` is onboarded). The link opens `/auth/verify`, which exchanges the token with `POST /api/auth/verify`, so mail scanners that fetch links can't use them up. Sessions are an HttpOnly cookie; only SHA-256 hashes of tokens and sessions are stored.
+- Limits: 3 links per address and 10 per IP per hour. State-changing requests must carry the site's Origin.
+- Data lives in D1 `radio-lessons` (EU jurisdiction): `users`, `login_tokens`, `sessions`, `progress` (one JSON blob per user, see `app/progress/model.ts`). Progress is always kept in localStorage too; when signed in it is merged with the server copy (finished lessons add up, newest position wins) and uploaded after changes.
+- Schema changes: add a file to `migrations/`, then `pnpm db:migrate` (remote) and `wrangler d1 migrations apply radio-lessons --local` for `pnpm preview`. After changing bindings, `pnpm types`.
+- Local test of the API: `pnpm build && pnpm preview`; emails aren't sent, Wrangler logs where it saved them (the link inside points at the live domain; swap in localhost).
 
 ## How it fits together
 

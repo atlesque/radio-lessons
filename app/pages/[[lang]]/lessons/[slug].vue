@@ -28,9 +28,13 @@ const session = createSession();
 onBeforeUnmount(() => session.dispose());
 
 /** Keeps ?step= in the URL in step with the lesson (1-based, or "done"). */
+const pageQuery = usePageQuery();
 function syncUrl(step: number | 'done') {
-  if (route.query.step === String(step)) return;
-  void router.replace({ query: { ...route.query, step: String(step) }, hash: route.hash });
+  pageQuery.afterHydration(() => {
+    const query = Object.fromEntries(pageQuery.read());
+    if (query.step === String(step)) return;
+    void router.replace({ query: { ...query, step: String(step) }, hash: route.hash });
+  });
 }
 
 const run = useLessonRun(lesson, session, {
@@ -46,7 +50,7 @@ watch(() => run.view.value, (v) => { view.value = v; }, { immediate: true });
 onMounted(() => {
   // Wait for useProgress to read localStorage (its own onMounted ran first, in setup order).
   const slug = lesson.value.slug;
-  const q = route.query.step;
+  const q = pageQuery.read().get('step');
   if (q === 'done') { run.start({ finished: true }); return; }
   const saved = progress.resumeOf(slug);
   const asked = Number(q);

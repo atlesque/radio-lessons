@@ -7,6 +7,7 @@ import { LESSONS, lessonBySlug } from '~/lessons/lessons';
 definePageMeta({ validate: (route) => !route.params.lang || route.params.lang === 'nl' });
 const { t, to } = useLang();
 const { data, isDone, resumeOf } = useProgress();
+const account = useAccount();
 usePageSeo({
   path: '/',
   title: () => t({ en: 'Radio lessons: get started with the Icom IC-R5', nl: 'Radiolessen: aan de slag met de Icom IC-R5' }),
@@ -72,6 +73,19 @@ const inProgress = (slug: string) => {
         <p v-if="resume" class="mt-3 text-sm text-toned">
           {{ t({ en: 'Last time:', nl: 'Vorige keer:' }) }} <span class="font-medium text-highlighted">{{ t(resume.lesson.title) }}</span>
         </p>
+        <ClientOnly>
+          <p v-if="account.status.value === 'signed-out'" class="mt-3 flex flex-wrap items-center gap-x-1.5 text-sm text-muted">
+            <UIcon name="i-lucide-cloud" class="size-4" />
+            {{ t({ en: 'Your progress is saved in this browser.', nl: 'Je voortgang wordt in deze browser bewaard.' }) }}
+            <button type="button" class="font-medium text-primary underline underline-offset-2" @click="account.signInOpen.value = true">
+              {{ t({ en: 'Sign in to keep it on all your devices', nl: 'Meld je aan om ze op al je toestellen te hebben' }) }}
+            </button>
+          </p>
+          <p v-else-if="account.status.value === 'signed-in'" class="mt-3 flex items-center gap-1.5 text-sm text-muted">
+            <UIcon name="i-lucide-cloud-check" class="size-4 text-success" />
+            {{ t({ en: 'Signed in as', nl: 'Aangemeld als' }) }} <span class="font-medium text-toned">{{ account.email.value }}</span> · {{ t({ en: 'progress saved', nl: 'voortgang bewaard' }) }}
+          </p>
+        </ClientOnly>
         <p class="mt-4 text-sm text-muted">
           {{ LESSONS.length }} {{ t({ en: 'lessons', nl: 'lessen' }) }} · {{ t({ en: 'about', nl: 'ongeveer' }) }} {{ totalMinutes }} {{ t({ en: 'minutes', nl: 'minuten' }) }} · English &amp; Nederlands
         </p>

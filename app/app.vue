@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { lang } = useLang();
 useHead({ htmlAttrs: { lang } });
+useProgressSync();
 </script>
 
 <template>

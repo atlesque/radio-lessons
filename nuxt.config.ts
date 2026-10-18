@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   // Icons named in data files (the lessons) aren't found by the bundle scan.
   icon: {
     clientBundle: {
-      icons: ['lucide:scan-search', 'lucide:power', 'lucide:volume-2', 'lucide:audio-lines', 'lucide:radio', 'lucide:waves', 'lucide:scale', 'lucide:bookmark', 'lucide:radar', 'lucide:messages-square', 'lucide:satellite', 'lucide:signal', 'lucide:settings-2'],
+      icons: ['lucide:cloud-check', 'lucide:loader-circle', 'lucide:log-out', 'lucide:trash-2', 'lucide:scan-search', 'lucide:power', 'lucide:volume-2', 'lucide:audio-lines', 'lucide:radio', 'lucide:waves', 'lucide:scale', 'lucide:bookmark', 'lucide:radar', 'lucide:messages-square', 'lucide:satellite', 'lucide:signal', 'lucide:settings-2'],
     },
   },
   app: {
@@ -17,7 +17,7 @@ export default defineNuxtConfig({
     },
   },
   // Static output only; without this, Nitro switches to its Cloudflare preset inside Workers Builds.
-  nitro: { preset: 'static', prerender: { routes: ['/', '/nl', '/sitemap.xml'], crawlLinks: true, ignore: [/\?/] } },
+  nitro: { preset: 'static', prerender: { routes: ['/', '/nl', '/sitemap.xml', '/auth/verify', '/nl/auth/verify'], crawlLinks: true, ignore: [/\?/] } },
   vite: {
     optimizeDeps: {
       include: [

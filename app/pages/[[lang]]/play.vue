@@ -11,19 +11,20 @@ definePageMeta({
   scrollToTop: false,
 });
 const { t } = useLang();
-const route = useRoute();
 usePageSeo({
   path: '/play',
   title: () => t({ en: 'Free play · IC-R5 radio simulator', nl: 'Vrij spelen · IC-R5-radiosimulator' }),
   description: () => t({ en: 'Try every key of the Icom IC-R5 on a 3D simulator, with practice signals to find.', nl: 'Probeer elke toets van de Icom IC-R5 op een 3D-simulator, met oefensignalen om te vinden.' }),
 });
 
+const pageQuery = usePageQuery();
 const session = createSession();
 onBeforeUnmount(() => session.dispose());
 const view = ref<View>('angle');
 onMounted(() => {
-  const f = Number(route.query.f);
-  const m = String(route.query.m ?? '') as Mode;
+  const params = pageQuery.read();
+  const f = Number(params.get('f'));
+  const m = (params.get('m') ?? '') as Mode;
   session.radio.load(tuned(f > 0 ? f : MHz(100.6), ['FM', 'WFM', 'AM'].includes(m) ? m : f > 0 ? undefined : 'WFM'));
   if (f > 0) view.value = 'front';
 });
