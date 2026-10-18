@@ -10,7 +10,7 @@ const stepCount = computed(() => props.lesson.steps.length);
 const doneCount = computed(() => run.completed.value.filter(Boolean).length);
 
 const status = computed(() => {
-  if (run.isComplete.value) return t({ en: 'Done!', nl: 'Gelukt!' });
+  if (run.isComplete.value) return '';
   switch (run.kind.value) {
     case 'action': return t({ en: 'Your turn: try it on the radio.', nl: 'Jouw beurt: probeer het op de radio.' });
     case 'explore': return t({ en: 'Click the glowing part on the radio.', nl: 'Klik op het oplichtende onderdeel van de radio.' });
@@ -58,7 +58,19 @@ watch(() => run.index.value, () => nextTick(() => card.value?.scrollIntoView({ b
     >
       <p class="flex items-center gap-2 text-xs font-semibold text-muted">
         <span>{{ t({ en: 'Step', nl: 'Stap' }) }} {{ run.index.value + 1 }} / {{ stepCount }}</span>
-        <UBadge v-if="run.isComplete.value" color="success" variant="subtle" size="sm" icon="i-lucide-check" :label="t({ en: 'Done', nl: 'Klaar' })" />
+        <UButton
+          v-if="run.isComplete.value"
+          color="success"
+          variant="subtle"
+          size="xs"
+          icon="i-lucide-check"
+          trailing-icon="i-lucide-rotate-ccw"
+          :label="t({ en: 'Done', nl: 'Klaar' })"
+          :title="t({ en: 'Do this step again', nl: 'Doe deze stap opnieuw' })"
+          :aria-label="t({ en: 'Done. Do this step again', nl: 'Klaar. Doe deze stap opnieuw' })"
+          class="done-badge"
+          @click="run.resetStep()"
+        />
       </p>
       <h2 class="mt-1 text-lg font-semibold text-highlighted">{{ t(run.step.value.title) }}</h2>
       <div class="mt-2 text-[0.95rem] text-toned">
@@ -84,7 +96,7 @@ watch(() => run.index.value, () => nextTick(() => card.value?.scrollIntoView({ b
         <RichText :text="t(run.step.value.tip)" />
       </div>
 
-      <p v-if="status" class="mt-3 text-sm font-medium" :class="run.isComplete.value ? 'text-success' : 'text-primary'">{{ status }}</p>
+      <p v-if="status" class="mt-3 text-sm font-medium text-primary">{{ status }}</p>
 
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <UButton
@@ -150,3 +162,10 @@ watch(() => run.index.value, () => nextTick(() => card.value?.scrollIntoView({ b
     </details>
   </div>
 </template>
+
+<style scoped>
+/* The redo arrow only appears on hover or focus, so the badge reads as "Done" first. */
+.done-badge :deep([data-slot='trailingIcon']) { width: 0; opacity: 0; transition: width 120ms, opacity 120ms; }
+.done-badge:hover :deep([data-slot='trailingIcon']),
+.done-badge:focus-visible :deep([data-slot='trailingIcon']) { width: 0.875rem; opacity: 1; }
+</style>

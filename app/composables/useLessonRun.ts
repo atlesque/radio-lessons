@@ -16,6 +16,8 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session) {
   let memo: Record<string, number> = {};
   let demo: DemoRun | null = null;
   let advanceTimer: ReturnType<typeof setTimeout> | null = null;
+  /** The radio as it was when the current step began, for redoing the step. */
+  let snapshot: ReturnType<typeof structuredClone<Session['radio']['state']>> | null = null;
 
   const step = computed(() => lesson.value.steps[index.value]!);
   const kind = computed(() => (step.value.check ? 'action' : step.value.explore ? 'explore' : step.value.quiz ? 'quiz' : 'info'));
@@ -35,6 +37,18 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session) {
     clearTimer();
     cancelDemo();
     index.value = i;
+    memo = {};
+    quizPick.value = null;
+    snapshot = structuredClone(toRaw(session.radio.state));
+  }
+
+  /** Un-marks the current step and puts the radio back as it was when the step began. */
+  function resetStep() {
+    clearTimer();
+    cancelDemo();
+    session.input.releaseAll();
+    if (snapshot) session.radio.load(structuredClone(snapshot));
+    completed.value = completed.value.map((c, i) => (i === index.value ? false : c));
     memo = {};
     quizPick.value = null;
   }
@@ -101,7 +115,7 @@ export function useLessonRun(lesson: Ref<Lesson>, session: Session) {
 
   watch(lesson, start);
 
-  return { index, step, kind, completed, isComplete, finished, quizPick, demoing, view, highlight, gesture, start, next, prev, goTo, pick, answer, showMe };
+  return { index, step, kind, completed, isComplete, finished, quizPick, demoing, view, highlight, gesture, start, next, prev, goTo, pick, answer, showMe, resetStep };
 }
 
 export type LessonRun = ReturnType<typeof useLessonRun>;
