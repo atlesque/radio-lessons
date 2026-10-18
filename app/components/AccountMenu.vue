@@ -95,7 +95,7 @@ const items = computed(() => [
         </div>
         <form v-else class="flex flex-col gap-3" @submit.prevent="send">
           <UFormField :label="t({ en: 'Email address', nl: 'E-mailadres' })" :error="error || undefined">
-            <UInput v-model="address" type="email" autocomplete="email" required autofocus class="w-full" size="lg" placeholder="naam@voorbeeld.be" :disabled="phase === 'sending'" />
+            <UInput v-model="address" type="email" autocomplete="email" required autofocus class="w-full" size="lg" :placeholder="t({ en: 'name@example.com', nl: 'naam@voorbeeld.be' })" :disabled="phase === 'sending'" />
           </UFormField>
           <UButton type="submit" block size="lg" :loading="phase === 'sending'" icon="i-lucide-mail" :label="t({ en: 'Email me a sign-in link', nl: 'Stuur me een aanmeldlink' })" />
           <p class="text-xs leading-relaxed text-muted">
