@@ -329,9 +329,9 @@ defineExpose({ flyTo });
 
 <template>
   <div ref="host" class="absolute inset-0 overflow-hidden" :lang="lang">
-    <div v-if="!ready && !failed" class="absolute inset-0 grid place-items-center text-sm text-muted">
-      <span class="inline-flex items-center gap-2"><UIcon name="i-lucide-loader-circle" class="size-4 animate-spin" />{{ t({ en: 'Building the radio…', nl: 'De radio wordt gebouwd…' }) }}</span>
-    </div>
+    <Transition leave-active-class="transition-opacity duration-300" leave-to-class="opacity-0">
+      <RadioSkeleton v-if="!ready && !failed" />
+    </Transition>
     <div v-if="failed" class="absolute inset-0 grid place-items-center p-6 text-center text-sm text-muted">
       {{ t({ en: 'Your browser could not start 3D graphics (WebGL). The key pad below still works.', nl: 'Je browser kon geen 3D-graphics (WebGL) starten. Het toetsenbord hieronder werkt wel.' }) }}
     </div>

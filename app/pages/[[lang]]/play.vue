@@ -85,6 +85,7 @@ const sheet: { title: { en: string; nl: string }; rows: [string, { en: string; n
       <div class="relative h-[40dvh] min-h-[240px] sm:h-[46dvh] lg:h-auto lg:min-h-0 lg:flex-1">
         <ClientOnly>
           <RadioViewer :session="session" :view="view" />
+          <template #fallback><RadioSkeleton /></template>
         </ClientOnly>
       </div>
       <ControlPad v-model:view="view" :session="session" />

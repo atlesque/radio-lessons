@@ -6,7 +6,7 @@ import { LESSONS, lessonBySlug } from '~/lessons/lessons';
 
 definePageMeta({ validate: (route) => !route.params.lang || route.params.lang === 'nl' });
 const { t, to } = useLang();
-const { data, isDone, resumeOf } = useProgress();
+const { data, loaded, isDone, resumeOf } = useProgress();
 const account = useAccount();
 usePageSeo({
   path: '/',
@@ -54,8 +54,10 @@ const inProgress = (slug: string) => {
           }) }}
         </p>
         <div class="mt-6 flex flex-wrap gap-2">
+          <!-- Which lesson to offer depends on the progress in localStorage, read once the page is running. -->
+          <USkeleton v-if="!loaded" class="h-9 w-44" />
           <UButton
-            v-if="resume"
+            v-else-if="resume"
             :to="resume.to"
             size="lg"
             trailing-icon="i-lucide-arrow-right"
@@ -74,7 +76,8 @@ const inProgress = (slug: string) => {
           {{ t({ en: 'Last time:', nl: 'Vorige keer:' }) }} <span class="font-medium text-highlighted">{{ t(resume.lesson.title) }}</span>
         </p>
         <ClientOnly>
-          <p v-if="account.status.value === 'signed-out'" class="mt-3 flex flex-wrap items-center gap-x-1.5 text-sm text-muted">
+          <USkeleton v-if="account.status.value === 'unknown'" class="mt-3 h-5 w-80 max-w-full" />
+          <p v-else-if="account.status.value === 'signed-out'" class="mt-3 flex flex-wrap items-center gap-x-1.5 text-sm text-muted">
             <UIcon name="i-lucide-cloud" class="size-4" />
             {{ t({ en: 'Your progress is saved in this browser.', nl: 'Je voortgang wordt in deze browser bewaard.' }) }}
             <button type="button" class="font-medium text-primary underline underline-offset-2" @click="account.signInOpen.value = true">
@@ -85,6 +88,7 @@ const inProgress = (slug: string) => {
             <UIcon name="i-lucide-cloud-check" class="size-4 text-success" />
             {{ t({ en: 'Signed in as', nl: 'Aangemeld als' }) }} <span class="font-medium text-toned">{{ account.email.value }}</span> · {{ t({ en: 'progress saved', nl: 'voortgang bewaard' }) }}
           </p>
+          <template #fallback><USkeleton class="mt-3 h-5 w-80 max-w-full" /></template>
         </ClientOnly>
         <p class="mt-4 text-sm text-muted">
           {{ LESSONS.length }} {{ t({ en: 'lessons', nl: 'lessen' }) }} · {{ t({ en: 'about', nl: 'ongeveer' }) }} {{ totalMinutes }} {{ t({ en: 'minutes', nl: 'minuten' }) }} · English &amp; Nederlands
@@ -93,6 +97,7 @@ const inProgress = (slug: string) => {
       <div class="stage relative h-[380px] overflow-hidden rounded-xl border border-default sm:h-[480px]">
         <ClientOnly>
           <RadioViewer :session="session" view="overview" idle-spin :keyboard="false" :wheel-zoom="false" />
+          <template #fallback><RadioSkeleton /></template>
         </ClientOnly>
         <p class="pointer-events-none absolute bottom-2 left-3 text-[0.7rem] text-dimmed">
           {{ t({ en: 'Drag to turn · scroll over the knob to tune', nl: 'Sleep om te draaien · scrol boven de knop om af te stemmen' }) }}
