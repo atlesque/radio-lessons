@@ -14,8 +14,8 @@ usePageSeo({
   }),
 });
 
-// TODO before publishing: fill in who is responsible for the data (the controller) and how to reach them.
-const CONTROLLER = { name: '[Name of the controller]', address: '[Postal address]', email: '[privacy contact email]' };
+// Who is responsible for the data (the controller) and how to reach them.
+const CONTROLLER = { name: 'Atlesque Media VOF', email: 'privacy@atlesque.dev' };
 const UPDATED: L = { en: '19 October 2026', nl: '19 oktober 2026' };
 
 interface Section { title: L; paragraphs?: L[]; items?: L[] }
@@ -24,8 +24,8 @@ const SECTIONS: Section[] = [
   {
     title: { en: 'Who is responsible', nl: 'Wie is verantwoordelijk' },
     paragraphs: [{
-      en: `The controller of your personal data is ${CONTROLLER.name}, ${CONTROLLER.address}. For anything about your data, email ${CONTROLLER.email}.`,
-      nl: `De verwerkingsverantwoordelijke voor je persoonsgegevens is ${CONTROLLER.name}, ${CONTROLLER.address}. Voor alles over je gegevens mail je naar ${CONTROLLER.email}.`,
+      en: `The controller of your personal data is ${CONTROLLER.name}. For anything about your data, email ${CONTROLLER.email}.`,
+      nl: `De verwerkingsverantwoordelijke voor je persoonsgegevens is ${CONTROLLER.name}. Voor alles over je gegevens mail je naar ${CONTROLLER.email}.`,
     }],
   },
   {
