@@ -69,6 +69,7 @@ onMounted(() => {
       <div class="relative h-[40dvh] min-h-[240px] sm:h-[46dvh] lg:h-auto lg:min-h-0 lg:flex-1">
         <ClientOnly>
           <RadioViewer :session="session" :highlight="run.highlight.value" :gesture="run.gesture.value" :view="view" @pick="run.pick" />
+          <template #fallback><RadioSkeleton /></template>
         </ClientOnly>
       </div>
       <ControlPad v-model:view="view" :session="session" :highlight="run.highlight.value" />

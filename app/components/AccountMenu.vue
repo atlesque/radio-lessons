@@ -60,7 +60,7 @@ const items = computed(() => [
 
 <template>
   <div class="flex items-center">
-    <span v-if="account.status.value === 'unknown'" class="block h-8 w-8" aria-hidden="true" />
+    <USkeleton v-if="account.status.value === 'unknown'" class="h-8 w-8 md:w-16" aria-hidden="true" />
     <UButton
       v-else-if="account.status.value === 'signed-out'"
       icon="i-lucide-log-in"

@@ -30,7 +30,7 @@ const languages = computed(() => (['en', 'nl'] as const).map((code) => ({
         <UDropdownMenu :items="links.map((l) => ({ label: l.label, to: l.to }))" :content="{ align: 'end' }" class="sm:hidden">
           <UButton icon="i-lucide-menu" color="neutral" variant="ghost" size="sm" :aria-label="t({ en: 'Menu', nl: 'Menu' })" />
         </UDropdownMenu>
-        <ClientOnly><AccountMenu /><template #fallback><span class="block h-8 w-8" /></template></ClientOnly>
+        <ClientOnly><AccountMenu /><template #fallback><USkeleton class="h-8 w-8 md:w-16" aria-hidden="true" /></template></ClientOnly>
         <UDropdownMenu :items="languages" :content="{ align: 'end' }">
           <UButton icon="i-lucide-globe" color="neutral" variant="ghost" size="sm" square :aria-label="t({ en: 'Language: English', nl: 'Taal: Nederlands' })" :title="t({ en: 'Language', nl: 'Taal' })" />
         </UDropdownMenu>

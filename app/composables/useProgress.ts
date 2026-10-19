@@ -36,5 +36,5 @@ export function useProgress() {
   };
   const resumeOf = (slug: string) => data.value.resume[slug] ?? null;
   const reset = () => { replace(emptyProgress()); changes.value++; };
-  return { data, done, changes, isDone, markDone, setPosition, resumeOf, replace, reset };
+  return { data, loaded, done, changes, isDone, markDone, setPosition, resumeOf, replace, reset };
 }
