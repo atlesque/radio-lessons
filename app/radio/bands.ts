@@ -58,7 +58,9 @@ export interface Station {
   real?: boolean;
 }
 
-const wfm = (id: string, mhz: number, sound: Sound, strength: number, label: L): Station => ({ id, f: MHz(mhz), flat: kHz(40), fade: kHz(160), mode: 'WFM', strength, sound, label, real: true });
+// Each signal is heard only inside its own channel: one 100 kHz click off an FM station, one 5 kHz step off an
+// AM station or outside the DAB block is silence (just band noise with the squelch open).
+const wfm = (id: string, mhz: number, sound: Sound, strength: number, label: L): Station => ({ id, f: MHz(mhz), flat: kHz(25), fade: kHz(50), mode: 'WFM', strength, sound, label, real: true });
 const nfm = (id: string, mhz: number, on: number, period: number, label: L, strength = 0.7): Station => ({ id, f: MHz(mhz), flat: kHz(2.5), fade: kHz(7.5), mode: 'FM', strength, sound: 'voice', on, period, label });
 
 /**
@@ -71,14 +73,14 @@ export const STATIONS: Station[] = [
   wfm('radio1', 91.7, 'talk', 0.9, { en: 'Radio 1 (Vlaams-Brabant)', nl: 'Radio 1 (Vlaams-Brabant)' }),
   wfm('radio2', 93.7, 'mellow', 0.84, { en: 'Radio 2 Vlaams-Brabant', nl: 'Radio 2 Vlaams-Brabant' }),
   wfm('stubru', 100.6, 'rock', 0.92, { en: 'Studio Brussel (Vlaams-Brabant)', nl: 'Studio Brussel (Vlaams-Brabant)' }),
-  { id: 'sw', f: kHz(6070), flat: kHz(2), fade: kHz(6), mode: 'AM', strength: 0.45, sound: 'talk', label: { en: 'Shortwave broadcaster (practice signal)', nl: 'Kortegolfzender (oefensignaal)' } },
-  { id: 'mw', f: kHz(1008), flat: kHz(2), fade: kHz(6), mode: 'AM', strength: 0.35, sound: 'mellow', label: { en: 'Distant AM station (practice signal)', nl: 'Verre AM-zender (oefensignaal)' } },
+  { id: 'sw', f: kHz(6070), flat: kHz(2), fade: kHz(3), mode: 'AM', strength: 0.45, sound: 'talk', label: { en: 'Shortwave broadcaster (practice signal)', nl: 'Kortegolfzender (oefensignaal)' } },
+  { id: 'mw', f: kHz(1008), flat: kHz(2), fade: kHz(3), mode: 'AM', strength: 0.35, sound: 'mellow', label: { en: 'Distant AM station (practice signal)', nl: 'Verre AM-zender (oefensignaal)' } },
   { ...nfm('cb19', 27.185, 6000, 16000, { en: 'CB channel 19 (practice signal)', nl: 'CB-kanaal 19 (oefensignaal)' }), flat: kHz(2.5), fade: kHz(6) },
   nfm('call2m', 145.5, 4500, 20000, { en: '2 m calling channel (practice signal)', nl: '2m-aanroepkanaal (oefensignaal)' }, 0.6),
   nfm('rep2m', 145.65, 7000, 15000, { en: '2 m repeater output (practice signal)', nl: 'Uitgang 2m-relais (oefensignaal)' }, 0.8),
   nfm('iss', 145.8, 6000, 11000, { en: 'ISS voice downlink (practice pass)', nl: 'ISS-spraakverbinding (oefenpassage)' }, 0.55),
   nfm('pmr3', 446.03125, 5000, 13000, { en: 'PMR446 channel 3 (practice signal)', nl: 'PMR446-kanaal 3 (oefensignaal)' }, 0.75),
-  { id: 'dab', f: 223936000, flat: 700000, fade: 800000, mode: 'FM', strength: 0.7, sound: 'digital', label: { en: 'DAB+ block 12A (digital, not decodable)', nl: 'DAB+-blok 12A (digitaal, niet te decoderen)' } },
+  { id: 'dab', f: 223936000, flat: 700000, fade: 68000, mode: 'FM', strength: 0.7, sound: 'digital', label: { en: 'DAB+ block 12A (digital, not decodable)', nl: 'DAB+-blok 12A (digitaal, niet te decoderen)' } },
 ];
 
 /** PMR446 channels 1–16 (12.5 kHz apart from 446.00625 MHz). */
