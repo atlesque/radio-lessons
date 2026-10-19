@@ -35,6 +35,12 @@ const inProgress = (slug: string) => {
   const r = resumeOf(slug);
   return r && r.step > 0 && !isDone(slug) ? r.step + 1 : null;
 };
+/** Card and icon-tile classes that set done, in progress and not started apart. */
+const cardTone = (slug: string) => isDone(slug)
+  ? { card: 'border-success/60 ring-1 ring-success/40 bg-[color-mix(in_srgb,var(--ui-success)_6%,var(--ui-bg))] hover:border-success hover:bg-[color-mix(in_srgb,var(--ui-success)_10%,var(--ui-bg))]', icon: 'bg-success/15 text-success' }
+  : inProgress(slug)
+    ? { card: 'border-default bg-[color-mix(in_srgb,var(--ui-secondary)_6%,var(--ui-bg))] hover:border-accented hover:bg-[color-mix(in_srgb,var(--ui-secondary)_10%,var(--ui-bg))]', icon: 'bg-secondary/15 text-secondary' }
+    : { card: 'border-default bg-default hover:border-accented hover:bg-elevated/60', icon: 'bg-elevated text-primary' };
 </script>
 
 <template>
@@ -106,9 +112,10 @@ const inProgress = (slug: string) => {
         <li v-for="(l, i) in LESSONS" :key="l.slug">
           <NuxtLink
             :to="to(`/lessons/${l.slug}`) + (inProgress(l.slug) ? `?step=${inProgress(l.slug)}` : '')"
-            class="group flex h-full gap-3 rounded-lg border border-default bg-default p-4 transition hover:border-accented hover:bg-elevated/60 focus-visible:outline-2 focus-visible:outline-primary"
+            class="group flex h-full gap-3 rounded-lg border p-4 transition focus-visible:outline-2 focus-visible:outline-primary"
+            :class="cardTone(l.slug).card"
           >
-            <span class="grid size-10 shrink-0 place-items-center rounded-md bg-elevated text-primary">
+            <span class="grid size-10 shrink-0 place-items-center rounded-md" :class="cardTone(l.slug).icon">
               <UIcon :name="l.icon" class="size-5" />
             </span>
             <span class="min-w-0 flex-1">
@@ -119,6 +126,9 @@ const inProgress = (slug: string) => {
               </span>
               <span class="mt-0.5 block font-semibold text-highlighted group-hover:underline">{{ t(l.title) }}</span>
               <span class="mt-1 block text-sm leading-snug text-muted">{{ t(l.summary) }}</span>
+              <span v-if="inProgress(l.slug)" class="mt-3 block h-1 overflow-hidden rounded-full bg-secondary/15" aria-hidden="true">
+                <span class="block h-full rounded-full bg-secondary" :style="{ width: `${((inProgress(l.slug)! - 1) / l.steps.length) * 100}%` }" />
+              </span>
             </span>
           </NuxtLink>
         </li>
