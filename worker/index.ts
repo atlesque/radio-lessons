@@ -62,8 +62,8 @@ async function currentUser(req: Request, env: Env) {
   const token = cookieValue(req, COOKIE);
   if (!token) return null;
   const row = await env.DB.prepare(
-    'SELECT u.id, u.email FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > ?',
-  ).bind(await sha256(token), Date.now()).first<{ id: string; email: string }>();
+    'SELECT u.id, u.email, u.created_at FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > ?',
+  ).bind(await sha256(token), Date.now()).first<{ id: string; email: string; created_at: number }>();
   return row ?? null;
 }
 
@@ -126,9 +126,9 @@ async function verifyLink(req: Request, env: Env) {
   const used = await env.DB.prepare('UPDATE login_tokens SET used_at = ? WHERE token_hash = ? AND used_at IS NULL').bind(now, hash).run();
   if (!used.meta.changes) return fail(400, 'invalid');
 
-  let user = await env.DB.prepare('SELECT id, email FROM users WHERE email = ?').bind(row.email).first<{ id: string; email: string }>();
+  let user = await env.DB.prepare('SELECT id, email, created_at FROM users WHERE email = ?').bind(row.email).first<{ id: string; email: string; created_at: number }>();
   if (!user) {
-    user = { id: crypto.randomUUID(), email: row.email };
+    user = { id: crypto.randomUUID(), email: row.email, created_at: now };
     await env.DB.prepare('INSERT INTO users (id, email, created_at, last_login_at) VALUES (?, ?, ?, ?)').bind(user.id, user.email, now, now).run();
   } else {
     await env.DB.prepare('UPDATE users SET last_login_at = ? WHERE id = ?').bind(now, user.id).run();
@@ -138,13 +138,13 @@ async function verifyLink(req: Request, env: Env) {
     env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(now),
     env.DB.prepare('INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)').bind(await sha256(session), user.id, now, now + SESSION_TTL),
   ]);
-  return json({ email: user.email, next: safeNext(row.next_path), progress: await loadProgress(env, user.id) }, 200, { 'set-cookie': sessionCookie(session, SESSION_TTL) });
+  return json({ email: user.email, createdAt: user.created_at, next: safeNext(row.next_path), progress: await loadProgress(env, user.id) }, 200, { 'set-cookie': sessionCookie(session, SESSION_TTL) });
 }
 
 async function me(req: Request, env: Env) {
   const user = await currentUser(req, env);
   if (!user) return fail(401, 'signed_out');
-  return json({ email: user.email, progress: await loadProgress(env, user.id) });
+  return json({ email: user.email, createdAt: user.created_at, progress: await loadProgress(env, user.id) });
 }
 
 async function saveProgress(req: Request, env: Env) {
@@ -166,9 +166,12 @@ async function signOut(req: Request, env: Env) {
   return json({ ok: true }, 200, { 'set-cookie': sessionCookie('', 0) });
 }
 
+/** Removes everything stored about the account. The request must repeat the account's email address. */
 async function deleteAccount(req: Request, env: Env) {
   const user = await currentUser(req, env);
   if (!user) return fail(401, 'signed_out');
+  const b = await body(req);
+  if (typeof b?.confirm !== 'string' || b.confirm.trim().toLowerCase() !== user.email) return fail(400, 'confirm_mismatch');
   await env.DB.batch([
     env.DB.prepare('DELETE FROM progress WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(user.id),
@@ -186,7 +189,19 @@ const ROUTES: Record<string, Partial<Record<string, (req: Request, env: Env) => 
   '/api/progress': { PUT: saveProgress },
 };
 
+/** Daily clean-up, so expired sign-in links and sessions are gone even when nobody signs in (see the privacy policy). */
+async function purgeExpired(env: Env) {
+  const now = Date.now();
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM login_tokens WHERE created_at < ?').bind(now - 24 * HOUR),
+    env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(now),
+  ]);
+}
+
 export default {
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(purgeExpired(env));
+  },
   async fetch(req, env): Promise<Response> {
     const url = new URL(req.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(req);

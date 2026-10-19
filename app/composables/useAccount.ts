@@ -21,6 +21,7 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<{ ok: boole
 export function useAccount() {
   const status = useState<Status>('account-status', () => 'unknown');
   const email = useState<string | null>('account-email', () => null);
+  const createdAt = useState<number | null>('account-created-at', () => null);
   const syncing = useState('account-syncing', () => false);
   const lastSync = useState<number | null>('account-last-sync', () => null);
   const signInOpen = useState('account-signin-open', () => false);
@@ -50,9 +51,10 @@ export function useAccount() {
   /** Checks the session once per page load. */
   async function init() {
     if (status.value !== 'unknown') return;
-    const res = await api<{ email: string; progress: unknown }>('/api/me');
+    const res = await api<{ email: string; createdAt: number; progress: unknown }>('/api/me');
     if (res.ok && res.data) {
       email.value = res.data.email;
+      createdAt.value = res.data.createdAt ?? null;
       status.value = 'signed-in';
       await adopt(res.data.progress);
     } else {
@@ -66,9 +68,10 @@ export function useAccount() {
   }
 
   async function verify(token: string) {
-    const res = await api<{ email: string; next: string; progress: unknown; error?: string }>('/api/auth/verify', { method: 'POST', body: JSON.stringify({ token }) });
+    const res = await api<{ email: string; createdAt: number; next: string; progress: unknown; error?: string }>('/api/auth/verify', { method: 'POST', body: JSON.stringify({ token }) });
     if (!res.ok || !res.data?.email) return { ok: false as const, error: res.data?.error ?? 'invalid' };
     email.value = res.data.email;
+    createdAt.value = res.data.createdAt ?? null;
     status.value = 'signed-in';
     await adopt(res.data.progress);
     return { ok: true as const, next: res.data.next };
@@ -78,16 +81,18 @@ export function useAccount() {
     await api('/api/auth/logout', { method: 'POST' });
     status.value = 'signed-out';
     email.value = null;
+    createdAt.value = null;
     lastSync.value = null;
   }
 
-  async function deleteAccount() {
-    const res = await api('/api/me', { method: 'DELETE' });
-    if (res.ok) { status.value = 'signed-out'; email.value = null; lastSync.value = null; }
-    return res.ok;
+  /** `confirm` is the account's email address, typed again by the person deleting it. */
+  async function deleteAccount(confirm: string) {
+    const res = await api<{ ok?: boolean; error?: string }>('/api/me', { method: 'DELETE', body: JSON.stringify({ confirm }) });
+    if (res.ok) { status.value = 'signed-out'; email.value = null; createdAt.value = null; lastSync.value = null; }
+    return res.ok ? 'deleted' : (res.data?.error ?? (res.status ? 'server_error' : 'offline'));
   }
 
-  return { status, email, syncing, lastSync, signInOpen, init, requestLink, verify, signOut, deleteAccount, upload };
+  return { status, email, createdAt, syncing, lastSync, signInOpen, init, requestLink, verify, signOut, deleteAccount, upload };
 }
 
 /** Uploads local progress changes while signed in. Call once (app.vue). */
