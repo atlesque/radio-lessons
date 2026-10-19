@@ -39,7 +39,7 @@ const inProgress = (slug: string) => {
 const cardTone = (slug: string) => isDone(slug)
   ? { card: 'border-success/60 ring-1 ring-success/40 bg-[color-mix(in_srgb,var(--ui-success)_6%,var(--ui-bg))] hover:border-success hover:bg-[color-mix(in_srgb,var(--ui-success)_10%,var(--ui-bg))]', icon: 'bg-success/15 text-success' }
   : inProgress(slug)
-    ? { card: 'border-default bg-[color-mix(in_srgb,var(--ui-secondary)_6%,var(--ui-bg))] hover:border-accented hover:bg-[color-mix(in_srgb,var(--ui-secondary)_10%,var(--ui-bg))]', icon: 'bg-secondary/15 text-secondary' }
+    ? { card: 'border-default bg-default hover:border-accented hover:bg-elevated/60', icon: 'bg-secondary/15 text-secondary' }
     : { card: 'border-default bg-default hover:border-accented hover:bg-elevated/60', icon: 'bg-elevated text-primary' };
 </script>
 
