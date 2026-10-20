@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useLang();
+const { t, to } = useLang();
 </script>
 
 <template>
@@ -11,6 +11,8 @@ const { t } = useLang();
       <p>
         {{ t({ en: 'An independent learning project, not affiliated with Icom Inc. Icom and IC-R5 are trademarks of Icom Inc.', nl: 'Een onafhankelijk leerproject, niet verbonden aan Icom Inc. Icom en IC-R5 zijn handelsmerken van Icom Inc.' }) }}
         <a href="https://github.com/atlesque/radio-lessons" target="_blank" rel="noopener" class="underline underline-offset-2">GitHub</a>
+        ·
+        <NuxtLink :to="to('/privacy')" class="underline underline-offset-2">{{ t({ en: 'Privacy policy', nl: 'Privacybeleid' }) }}</NuxtLink>
       </p>
     </div>
   </footer>

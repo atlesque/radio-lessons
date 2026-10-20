@@ -3,7 +3,7 @@ import { LESSON_SLUGS } from '../../app/lessons/slugs';
 const SITE = 'https://radio-lessons.atlesque.dev';
 
 export default defineEventHandler((event) => {
-  const paths = ['/', '/play', '/frequencies', '/glossary', ...LESSON_SLUGS.map((s) => `/lessons/${s}`)];
+  const paths = ['/', '/play', '/frequencies', '/glossary', '/privacy', ...LESSON_SLUGS.map((s) => `/lessons/${s}`)];
   const nl = (p: string) => (p === '/' ? '/nl' : `/nl${p}`);
   const urls = paths.map((p) => `  <url>
     <loc>${SITE}${p}</loc>

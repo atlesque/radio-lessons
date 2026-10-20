@@ -22,6 +22,8 @@
     "SITE_URL": "https://radio-lessons.atlesque.dev",
     "MAIL_FROM": "radio-lessons@atlesque.dev"
   },
+  // Daily purge of expired sign-in links and sessions (worker/index.ts, scheduled).
+  "triggers": { "crons": ["17 3 * * *"] },
   "observability": { "enabled": true },
   "routes": [{ "pattern": "radio-lessons.atlesque.dev", "custom_domain": true }]
 }

@@ -1,11 +1,14 @@
 <script setup lang="ts">
 const { t, to, lang, other } = useLang();
 const route = useRoute();
+const account = useAccount();
 const links = computed(() => [
   { label: t({ en: 'Lessons', nl: 'Lessen' }), to: to('/'), active: route.path === to('/') || route.path.includes('/lessons/') },
   { label: t({ en: 'Free play', nl: 'Vrij spelen' }), to: to('/play'), active: route.path.endsWith('/play') },
   { label: t({ en: 'Frequencies', nl: 'Frequenties' }), to: to('/frequencies'), active: route.path.endsWith('/frequencies') },
   { label: t({ en: 'Glossary', nl: 'Woordenlijst' }), to: to('/glossary'), active: route.path.endsWith('/glossary') },
+  // Only once signed in (known after hydration, so the prerendered header never has it).
+  ...(account.status.value === 'signed-in' ? [{ label: t({ en: 'Account', nl: 'Account' }), to: to('/account'), active: route.path.endsWith('/account') }] : []),
 ]);
 // Each language in its own name; the current one is ticked and can't be picked.
 const languages = computed(() => (['en', 'nl'] as const).map((code) => ({
