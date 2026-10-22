@@ -16,7 +16,7 @@ usePageSeo({
 
 // Who is responsible for the data (the controller) and how to reach them.
 const CONTROLLER = { name: 'Atlesque Media VOF', email: 'privacy@atlesque.dev' };
-const UPDATED: L = { en: '19 October 2026', nl: '19 oktober 2026' };
+const UPDATED: L = { en: '22 October 2026', nl: '22 oktober 2026' };
 
 interface Section { title: L; paragraphs?: L[]; items?: L[] }
 
@@ -36,8 +36,8 @@ const SECTIONS: Section[] = [
         nl: 'Je kunt elke les zonder account volgen. Je voortgang (welke lessen klaar zijn, waar je gebleven was en de instellingen van de radio op die stap) en je licht of donker thema blijven in je eigen browser (localStorage). Ze verlaten je toestel niet tenzij je je aanmeldt, en je wist ze met de sitegegevens van je browser.',
       },
       {
-        en: 'We don\'t use advertising, tracking cookies or third-party trackers. Fonts and all other files are served from this site itself.',
-        nl: 'We gebruiken geen advertenties, trackingcookies of trackers van derden. Lettertypes en alle andere bestanden komen van deze site zelf.',
+        en: 'We don\'t use advertising, tracking cookies or third-party trackers. Fonts and all other files are served from this site itself; only the question about visit statistics comes from tools.atlesque.dev, which we also run, and the statistics themselves load only if you allow them (see below).',
+        nl: 'We gebruiken geen advertenties, trackingcookies of trackers van derden. Lettertypes en alle andere bestanden komen van deze site zelf; alleen de vraag over bezoekersstatistieken komt van tools.atlesque.dev, dat we ook zelf beheren, en de statistieken zelf laden alleen als je ze toestaat (zie verder).',
       },
     ],
   },
@@ -70,8 +70,12 @@ const SECTIONS: Section[] = [
         nl: 'Je account, aanmelding en opgeslagen voortgang: om de dienst te leveren waar je om vraagt als je je aanmeldt (AVG art. 6(1)(b), uitvoering van een overeenkomst).',
       },
       {
-        en: 'Limits on sign-in links, short-lived server logs and anonymous visit statistics: to keep the site secure, prevent abuse and see how it\'s used (art. 6(1)(f), legitimate interest).',
-        nl: 'Limieten op aanmeldlinks, kortlevende serverlogs en anonieme bezoekersstatistieken: om de site veilig te houden, misbruik te voorkomen en te zien hoe ze gebruikt wordt (art. 6(1)(f), gerechtvaardigd belang).',
+        en: 'Limits on sign-in links and short-lived server logs: to keep the site secure and prevent abuse (art. 6(1)(f), legitimate interest).',
+        nl: 'Limieten op aanmeldlinks en kortlevende serverlogs: om de site veilig te houden en misbruik te voorkomen (art. 6(1)(f), gerechtvaardigd belang).',
+      },
+      {
+        en: 'Visit statistics: only with your consent, to see how the lessons are used (art. 6(1)(a)). You can withdraw it at any time.',
+        nl: 'Bezoekersstatistieken: alleen met je toestemming, om te zien hoe de lessen gebruikt worden (art. 6(1)(a)). Je kunt die toestemming altijd intrekken.',
       },
     ],
     paragraphs: [{
@@ -87,8 +91,8 @@ const SECTIONS: Section[] = [
         nl: 'De site draait op Cloudflare (Cloudflare, Inc. en Cloudflare Ltd.), onze verwerker volgens zijn verwerkersovereenkomst (Data Processing Addendum). Accountgegevens staan in een Cloudflare D1-databank die beperkt is tot de Europese Unie. Aanmeldmails worden verstuurd via Cloudflare Email Sending. Het netwerk van Cloudflare behandelt verzoeken in het datacenter het dichtst bij jou, en Cloudflare kan gegevens verwerken in de Verenigde Staten onder het EU-VS-gegevensprivacykader en de modelcontractbepalingen van de EU.',
       },
       {
-        en: 'Visit statistics come from Cloudflare Web Analytics, which sets no cookies and stores nothing on your device. It counts page views with the page address, referrer, browser and country, without identifying you.',
-        nl: 'Bezoekersstatistieken komen van Cloudflare Web Analytics, dat geen cookies plaatst en niets op je toestel bewaart. Het telt paginaweergaven met het paginaadres, de verwijzende site, de browser en het land, zonder je te identificeren.',
+        en: 'Visit statistics come from Cloudflare Web Analytics and only load after you choose Allow when the site asks; if you choose No thanks, or your browser sends a Global Privacy Control signal, nothing is loaded. It sets no cookies and stores nothing on your device. It counts page views with the page address, referrer, browser, device type, country and loading speed, without identifying you. Your choice is kept in your browser (localStorage, atlesque-consent) for 12 months, and you can change it with Privacy settings at the bottom of every page.',
+        nl: 'Bezoekersstatistieken komen van Cloudflare Web Analytics en laden pas nadat je Allow (toestaan) kiest wanneer de site het vraagt; kies je No thanks, of stuurt je browser een Global Privacy Control-signaal, dan laadt er niets. Het plaatst geen cookies en bewaart niets op je toestel. Het telt paginaweergaven met het paginaadres, de verwijzende site, de browser, het type toestel, het land en de laadsnelheid, zonder je te identificeren. Je keuze blijft 12 maanden in je browser bewaard (localStorage, atlesque-consent), en je wijzigt ze met Privacy-instellingen onderaan elke pagina.',
       },
     ],
   },
@@ -105,8 +109,8 @@ const SECTIONS: Section[] = [
     title: { en: 'Your rights', nl: 'Je rechten' },
     paragraphs: [
       {
-        en: 'You have the right to access, correct, delete and take a copy of your data, to restrict or object to its processing, and to complain to a supervisory authority. In Account settings you can download your data and delete your account yourself: deletion removes your email address, your progress, your sessions and your sign-in links straight away. For anything else, email us and we\'ll answer within one month.',
-        nl: 'Je hebt het recht op inzage, verbetering, verwijdering en een kopie van je gegevens, om de verwerking te beperken of er bezwaar tegen te maken, en om klacht in te dienen bij een toezichthouder. In Accountinstellingen download je je gegevens en verwijder je zelf je account: dat wist meteen je e-mailadres, je voortgang, je sessies en je aanmeldlinks. Voor al het andere mail je ons en we antwoorden binnen een maand.',
+        en: 'You have the right to access, correct, delete and take a copy of your data, to restrict or object to its processing, to withdraw your consent to visit statistics, and to complain to a supervisory authority. In Account settings you can download your data and delete your account yourself: deletion removes your email address, your progress, your sessions and your sign-in links straight away. For anything else, email us and we\'ll answer within one month.',
+        nl: 'Je hebt het recht op inzage, verbetering, verwijdering en een kopie van je gegevens, om de verwerking te beperken of er bezwaar tegen te maken, om je toestemming voor bezoekersstatistieken in te trekken, en om klacht in te dienen bij een toezichthouder. In Accountinstellingen download je je gegevens en verwijder je zelf je account: dat wist meteen je e-mailadres, je voortgang, je sessies en je aanmeldlinks. Voor al het andere mail je ons en we antwoorden binnen een maand.',
       },
       {
         en: 'In Belgium the supervisory authority is the Data Protection Authority (Gegevensbeschermingsautoriteit), Drukpersstraat 35, 1000 Brussels, dataprotectionauthority.be.',
