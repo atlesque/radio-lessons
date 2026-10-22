@@ -14,6 +14,8 @@ export default defineNuxtConfig({
       title: 'Radio lessons',
       link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
       meta: [{ name: 'format-detection', content: 'telephone=no' }],
+      // Shared opt-in banner; loads Cloudflare Web Analytics only after consent.
+      script: [{ src: 'https://tools.atlesque.dev/consent.js', defer: true }],
     },
   },
   // Static output only; without this, Nitro switches to its Cloudflare preset inside Workers Builds.

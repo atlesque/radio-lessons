@@ -13,6 +13,8 @@ const { t, to } = useLang();
         <a href="https://github.com/atlesque/radio-lessons" target="_blank" rel="noopener" class="underline underline-offset-2">GitHub</a>
         ·
         <NuxtLink :to="to('/privacy')" class="underline underline-offset-2">{{ t({ en: 'Privacy policy', nl: 'Privacybeleid' }) }}</NuxtLink>
+        ·
+        <button type="button" data-privacy-settings class="cursor-pointer underline underline-offset-2">{{ t({ en: 'Privacy settings', nl: 'Privacy-instellingen' }) }}</button>
       </p>
     </div>
   </footer>
